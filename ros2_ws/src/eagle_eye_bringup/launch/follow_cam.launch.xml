@@ -1,0 +1,21 @@
+<launch>
+    <node pkg="eagle_eye_pkg" exec="gstreamer_pipeline" name="gstreamer_pipeline">
+       <param name="camera_url" value="rtsp://192.168.1.11:554/stream1"/>
+    <node/>
+</launch>
+
+<launch>
+    <node pkg="rotator_py_pkg" exec="rotator_controller" name="rotator_controller">
+       <param name="port" value="/dev/ttyUL0"/>
+       <param name="baudrate" value="9600"/>
+       <param name="address" value="1"/>
+    <node/>
+</launch>
+
+<launch>
+    <node pkg="rotator_py_pkg" exec="camera_controller" name="camera_controller">
+       <param name="updating_period" value="0.2"/>
+       <param name="frame_timeout" value="5"/>
+    <node/>
+</launch>
+

@@ -69,7 +69,7 @@ arch/*/include/generated
 patches-*
 
 # quilt's files
-patches
+#patches
 series
 
 # cscope files
@@ -94,4 +94,58 @@ signing_key.priv
 signing_key.x509
 x509.genkey
 
-#
+# Eagle-Eye-AI specific
+# Ignore build directories
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+ros2_ws/install/local_setup.*sh
+ros2_ws/install/setup.*sh
+ros2_ws/install/_local_setup_util_ps1.py
+ros2_ws/install/_local_setup_util_sh.py
+ros2_ws/install/_setup_util_ps1.py
+ros2_ws/install/_setup_util_sh.py
+
+# Ignore colcon build artifacts
+ros2_ws/colcon
+ros2_ws/COLCON_IGNORE
+
+# Ignore Python cache and compiled files
+__pycache__/
+/*.pyc
+
+# Ignore VS Code settings (if using VS Code)
+.vscode/
+
+# Ignore CLion settings (if using CLion)
+.idea/
+
+# Ignore CMake build artifacts
+CMakeCache.txt
+CMakeFiles/
+ros2_ws/cmake_install.cmake
+ros2_ws/Makefile
+
+# Ignore environment files
+.env
+
+# Ignore other typical unwanted files
+*.log
+*.bak
+*.swp
+*.swo
+.DS_Store
+
+# ROS 2 specific logs and temporary files
+log/latest/
+log/latest_build/
+log/latest_test/
+log/latest_colcon/
+log/latest_publisher_stats/
+log/latest_subscriber_stats/
+log/latest_test_results/
+log/test_latest/
+
+# Ignore the overlay file (created when using colcon to overlay workspaces)
+.overlay
+
