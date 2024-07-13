@@ -29,6 +29,8 @@ To list the installed files, run:
 
 - `block_design/`: Contains a Vivado TCL script that generates the block design for extensible platform.
 - `xdc`: Contains the the Vivado constraints file for RS485 PMOD pins and other external signal.
+- `dts`: Contains the the device tree data structure update data
+- `patch`: Contains the the Vivado IP patch file for Uart Lite IP for using RS-485 interface
 
 ## How to use the Vivado files
 
@@ -48,6 +50,16 @@ cp block_design/config_bd.tcl  kria-vitis-platforms/kv260/platforms/vivado/kv260
 Copy constraint file pin.xdc from platform ditectory over old one here
 
 `cp xdc/pin.xdc kria-vitis-platforms/kv260/platforms/vivado/kv260_ispMipiRx_vcu_DP/xdc/pin.xdc`
+
+## Applying the Patch to UartLite IP in Vivado for Using the RS-485 PMOD Module 
+
+To apply it to the original Vivado installation, go to its installation dir and go to .../Vivado/2022.1/data/ip/xilinx/axi_uartlite_v2_0. Copy the patch/axi_uartlite_v2_0_rs485.patch into this directory.  Then run patch to modify the sources. If you want you can test with --dry-run first.
+
+```
+cd /opt/Xilinx/Vivado/2022.1/data/ip/xilinx/axi_uartlite_v2_0
+patch --dry-run -p1 < axi_uartlite_v2_0_rs485.patch
+patch -p1 < axi_uartlite_v2_0_rs485.patch
+```
 
 Build the overlay - it takes abour 4 hours
 
@@ -86,9 +98,7 @@ Get the original smartcam dtsi
 
 `wget https://raw.githubusercontent.com/Xilinx/kria-apps-firmware/xlnx_rel_v2022.1/boards/kv260/smartcam/kv260-smartcam.dtsi`
 
-Open the `kv260-smartcam.dtsi` file and Add the content of the `update_dtsi.txt` file in the same place where the unused already commented out audio module is. Remove the commented out audio module.
-
-`vi kv260-smartcam.dtsi`
+Open the `kv260-smartcam.dtsi` file and add the content of the `dts/update_dtsi.txt` file in the same place where the unused already commented out audio pipeline is (lines from 234 to 285). Remove the commented out audio module.
 
 Compile dtb with dtc
 
