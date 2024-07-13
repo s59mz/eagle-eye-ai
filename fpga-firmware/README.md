@@ -32,6 +32,18 @@ To list the installed files, run:
 - `dts`: Contains the the device tree data structure update data
 - `patch`: Contains the the Vivado IP patch file for Uart Lite IP for using RS-485 interface
 
+## Applying the Patch to UartLite IP in Vivado for Using the RS-485 PMOD Module 
+
+To apply it to the original Vivado installation, go to its installation dir and go to .../Vivado/2022.1/data/ip/xilinx/axi_uartlite_v2_0. Copy the patch/axi_uartlite_v2_0_rs485.patch into this directory.  Then run patch to modify the sources. If you want you can test with --dry-run first.
+
+```
+cd /opt/Xilinx/Vivado/2022.1/data/ip/xilinx/axi_uartlite_v2_0
+patch --dry-run -p1 < axi_uartlite_v2_0_rs485.patch
+patch -p1 < axi_uartlite_v2_0_rs485.patch
+```
+
+This patch should be applied before building the Vitis Overlay
+
 ## How to use the Vivado files
 
 Get the Official Kria Vitis Platform repository
@@ -50,16 +62,6 @@ cp block_design/config_bd.tcl  kria-vitis-platforms/kv260/platforms/vivado/kv260
 Copy constraint file pin.xdc from platform ditectory over old one here
 
 `cp xdc/pin.xdc kria-vitis-platforms/kv260/platforms/vivado/kv260_ispMipiRx_vcu_DP/xdc/pin.xdc`
-
-## Applying the Patch to UartLite IP in Vivado for Using the RS-485 PMOD Module 
-
-To apply it to the original Vivado installation, go to its installation dir and go to .../Vivado/2022.1/data/ip/xilinx/axi_uartlite_v2_0. Copy the patch/axi_uartlite_v2_0_rs485.patch into this directory.  Then run patch to modify the sources. If you want you can test with --dry-run first.
-
-```
-cd /opt/Xilinx/Vivado/2022.1/data/ip/xilinx/axi_uartlite_v2_0
-patch --dry-run -p1 < axi_uartlite_v2_0_rs485.patch
-patch -p1 < axi_uartlite_v2_0_rs485.patch
-```
 
 Build the overlay - it takes abour 4 hours
 
