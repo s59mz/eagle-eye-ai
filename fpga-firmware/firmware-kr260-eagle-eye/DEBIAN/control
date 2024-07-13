@@ -1,0 +1,9 @@
+Package: firmware-kr260-eagle-eye
+Version: 1.0
+Section: base
+Priority: optional
+Architecture: all
+Depends:
+Maintainer: Matjaz Zibert S59MZ
+Description: Eagle Eye
+ This is a FPGA firmware of the Eagle-Eye-AI application for the Kria KR-260 board by AMD.
