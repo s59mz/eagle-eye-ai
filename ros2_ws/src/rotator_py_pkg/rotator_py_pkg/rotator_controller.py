@@ -14,7 +14,7 @@ class RotatorControllerNode(Node):
 
         # Declare parameters for serial communication
         self.declare_parameter("port", "/dev/ttyUL0")
-        self.declare_parameter("baudrate", "9600")
+        self.declare_parameter("baudrate", 9600)
         self.declare_parameter("address", 1)
 
         # Retrieve parameter values
