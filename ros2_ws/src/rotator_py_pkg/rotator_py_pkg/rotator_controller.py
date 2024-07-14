@@ -125,13 +125,14 @@ class RotatorControllerNode(Node):
             self.get_logger().error(f"Failed to open serial port {port}: {e}")
             return None
 
-    def close_serial_port(self):
-        # Close serial port
-        self.serial_.close()
-        self.serial_ = None
-        self.pelcod_message_ = None
+    def destroy_node(self):
+        if (self.serial_):
+            # Close serial port
+            self.serial_.close()
+            self.serial_ = None
 
-        self.get_logger().info(f"Serial port {self.port_} is now closed.")
+        self.pelcod_message_ = None
+        super().destroy_node()
 
 
 def main(args=None):
@@ -142,12 +143,8 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.close_serial_port()
+        node.destroy_node()
         return
-
-    node.close_serial_port()
-    rclpy.shutdown()
-
 
 if __name__ == "__main__":
     main()
