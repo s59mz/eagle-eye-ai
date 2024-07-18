@@ -19,8 +19,14 @@
     
       The RTSP webcam is mandatory video input device supported in the application.
 
-      Recommended webcam is the [SIMICAM 4k Video Cam] (https://a.aliexpress.com/_EznpRub).
-    
+      Recommended webcam is the [SIMICAM 4k Video Cam](https://a.aliexpress.com/_EznpRub).
+
+    * Camera Rotator:
+
+      Mount the camera to a Pan-Tilt Camera Rotator that supports RS-485 and Pelco-P/D protocol for rotating the camera
+
+      Recommended camera rotator is the [PTZ Rotator](https://a.aliexpress.com/_EvhGQMB).
+      
     * Network connection:
     
       Connect the Ethernet cable to your local network with DHCP enabled.
@@ -31,7 +37,7 @@
       
       In eagle-eye application supports only RTSP camera input mode.
 
-      Eagle-Eye application does not yet support speakers.
+      Eagle-Eye application does not support speakers.
     
 3. Software Preparation:
 
