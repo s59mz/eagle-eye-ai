@@ -38,9 +38,9 @@ ARG BUILD_DATE
 LABEL org.label-schema.build-date=$BUILD_DATE
 
 # Install welcome screen
-COPY dockerfiles/bashrc /etc/bash.bashrc
+COPY scripts/bashrc /etc/bash.bashrc
 RUN chmod a+rwx /etc/bash.bashrc
-ADD dockerfiles/welcome.sh /etc/
+ADD scripts/welcome.sh /etc/
 RUN echo $BUILD_DATE > /etc/BUILD_DATE.txt
 
 # Set working directory
@@ -55,6 +55,6 @@ COPY ros2_ws/src src
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && colcon build"
 
 # install application startup script
-ADD dockerfiles/run_eagle_eye_ai.sh .
+ADD scripts/run_eagle_eye_ai.sh .
 RUN chmod +x run_eagle_eye_ai.sh
 
