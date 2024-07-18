@@ -85,7 +85,7 @@
 	* Get the Eagle-Eye-AI gir repository from GitHub
 
     ```bash
-    git clone https://github.com/s59mz/eagle-eye-ai
+    git clone https://github.com/s59mz/eagle-eye-ai.git
     ```
 
 	* Enter to that directory
