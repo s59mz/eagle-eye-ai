@@ -26,7 +26,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
     * Camera Rotator:
 
-      Mount the camera to a Pan-Tilt Camera Rotator that supports RS-485 and Pelco-P/D protocol for rotating the camera
+      Mount the camera to a Pan-Tilt Camera Rotator that supports RS-485 and Pelco-P/D protocol for rotating the camera.
 
       Recommended camera rotator is the [PTZ Rotator](https://a.aliexpress.com/_EvhGQMB).
       
