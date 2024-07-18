@@ -168,7 +168,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 14. The storage volume on the SD card is limited with multiple dockers. You can use following command to remove the existing container.
 
     ```bash
-    docker rmi --force eagle-eye
+    docker rmi --force eagle-eye-ai
     ```
 
 # Run the Application
