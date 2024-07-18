@@ -109,20 +109,23 @@
 		sudo groupadd docker
 		sudo usermod -a -G docker  $USER
 
-	11) Build the application docker image for eagle-eye-ai using the below command.
+	11) Build the application docker image for eagle-eye-ai using the below command. The build process would last about 8 min on the Kria board. The image cannot be build on host PC.
 
                 cd eagle-eye-ai
 
-                ./build_ros2_docker.sh
-                ./build_eagle_eye_docker.sh
+                ./build.sh
 
 	12) Launch the docker using the below command
 
-		./run_eagle_eye_docker.sh
+		./run.sh
 
 		It will launch the eagle-eye-ai image in a new container
 
 		root@xlnx-docker/#
+
+                Optionally, you can run an empty ROS2 container with GStreamer support to test your own ROS2 packages.
+
+                ./ros2_humble_run.sh
 
 	14) The storage volume on the SD card is limited with multiple dockers. You can use following command to remove the existing container.
 
@@ -137,3 +140,5 @@
       You should be able to see the images the camera is capturing on the display-port monitor, and when there's face captured by camera, there should be blue box drawn around the face, and the box should follow the movement of the face.
 
       The camera rotator should start moving and follow the closest detected face.
+
+
