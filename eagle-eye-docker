@@ -1,0 +1,60 @@
+#
+# Eagle-Eye-AI 
+# Application Dockerfile for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+# Designed based on Kria KV260 Smartcam Demo App
+#
+# Original Smartcam link:
+#     https://github.com/Xilinx/smartcam/tree/xlnx_rel_v2022.1
+#     https://github.com/Xilinx/kria-docker/tree/xlnx_rel_v2022.1
+#
+
+
+## Building based on kria-developer docker image
+FROM xilinx/kria-developer:2022.1 AS build
+
+WORKDIR /workspace
+
+COPY eagle-eye-app eagle-eye-app
+
+RUN cd eagle-eye-app ;\
+    mkdir -p build/install ;\
+    cd build ;\
+    cmake ../ -DCMAKE_INSTALL_PREFIX:PATH=/ ;\
+    make ;\
+    make DESTDIR=./install install ;
+
+
+## Building based on kria-runtime docker image
+FROM ros2-humble:1.0
+
+# Copy from kria-developer builded files
+COPY --from=build /workspace/eagle-eye-app/build/install /
+
+# Logged builded time
+ARG BUILD_DATE
+LABEL org.label-schema.build-date=$BUILD_DATE
+
+# Install welcome screen
+COPY dockerfiles/bashrc /etc/bash.bashrc
+RUN chmod a+rwx /etc/bash.bashrc
+ADD dockerfiles/welcome.sh /etc/
+RUN echo $BUILD_DATE > /etc/BUILD_DATE.txt
+
+# Set working directory
+WORKDIR /root/ros2_ws
+
+RUN echo "source /root/ros2_ws/install/setup.bash" >> ~/.bashrc
+
+# Copy custom ROS2 code
+COPY ros2_ws/src src
+
+# Build the ROS2 workspace
+RUN /bin/bash -c "source /opt/ros/humble/setup.bash && colcon build"
+
+# install application startup script
+ADD dockerfiles/run_eagle_eye_ai.sh .
+RUN chmod +x run_eagle_eye_ai.sh
+

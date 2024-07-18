@@ -1,0 +1,21 @@
+{
+  "xclbin-location":"/lib/firmware/xilinx/kr260-eagle-eye/kr260-eagle-eye.xclbin",
+  "vvas-library-repo": "/opt/xilinx/kr260-eagle-eye/lib",
+  "element-mode":"inplace",
+  "kernels" :[
+    {
+      "library-name":"libvvas_airender.so",
+      "config": {
+          "fps_interval" : 10,
+          "font_size" : 2,
+          "font" : 3,
+          "thickness" : 2,
+          "debug_level" : 0,
+          "label_color" : { "blue" : 0, "green" : 0, "red" : 255 },
+          "label_filter" : [ "class", "probability" ],
+          "classes" : [
+          ]
+      }
+    }
+  ]
+}

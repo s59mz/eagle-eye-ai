@@ -1,0 +1,49 @@
+#
+# Eagle-Eye-AI 
+# Application Dockerfile for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+# Designed based on Kria KV260 Smartcam Demo App
+#
+# Original Smartcam link:
+#     https://github.com/Xilinx/smartcam/tree/xlnx_rel_v2022.1
+#     https://github.com/Xilinx/kria-docker/tree/xlnx_rel_v2022.1
+#
+
+
+## Building based on kria-runtime docker image
+FROM xilinx/kria-runtime:2022.1
+
+# set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Locales
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+    locales \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LANG=en_US.UTF-8
+
+# Install tools & dependencies
+RUN apt-get install --yes --no-install-recommends \
+    vim \
+    curl \
+    ca-certificates \
+    git ;
+
+# Add ROS2 apt repository
+RUN sh -c 'curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg'
+RUN sh -c 'echo "deb [arch=arm64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2-testing/ubuntu jammy main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null'
+
+# Install ROS2 packages
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+    ros-humble-ros-base \
+    ros-dev-tools ;
+
+# Install PySerial
+RUN pip3 install pyserial
+
+# Source the ROS2 setup script
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+RUN echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> ~/.bashrc
+

@@ -137,15 +137,15 @@ ros2_ws/Makefile
 .DS_Store
 
 # ROS 2 specific logs and temporary files
-log/latest/
-log/latest_build/
-log/latest_test/
-log/latest_colcon/
-log/latest_publisher_stats/
-log/latest_subscriber_stats/
-log/latest_test_results/
-log/test_latest/
+*/log/latest/
+*/log/latest_build/
+*/log/latest_test/
+*/log/latest_colcon/
+*/log/latest_publisher_stats/
+*/log/latest_subscriber_stats/
+*/log/latest_test_results/
+*/log/test_latest/
 
 # Ignore the overlay file (created when using colcon to overlay workspaces)
-.overlay
+*.overlay
 

@@ -23,11 +23,11 @@ public:
 	std::string pipeline_str = "rtspsrc location=" + camera_url_ + " ! "
                                    "rtph265depay ! h265parse ! omxh265dec ! videoconvert ! "
                                    "video/x-raw,format=NV12 ! tee name=t ! queue ! "
-                                   "vvas_xmultisrc kconfig=\"/opt/xilinx/kv260-smartcam/share/vvas/facedetect/preprocess.json\" ! queue ! "
-                                   "vvas_xfilter kernels-config=\"/opt/xilinx/kv260-smartcam/share/vvas/facedetect/aiinference.json\" ! "
+                                   "vvas_xmultisrc kconfig=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/preprocess.json\" ! queue ! "
+                                   "vvas_xfilter kernels-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/aiinference.json\" ! "
                                    "ima.sink_master vvas_xmetaaffixer name=ima ima.src_master ! queue name=probe max-size-buffers=1 leaky=2 ! fakesink "
                                    "t. ! queue max-size-buffers=1 leaky=2 ! ima.sink_slave_0 ima.src_slave_0 ! queue ! "
-                                   "vvas_xfilter name=\"draw\" kernels-config=\"/opt/xilinx/kv260-smartcam/share/vvas/facedetect/drawresult.json\" ! queue ! "
+                                   "vvas_xfilter name=\"draw\" kernels-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/drawresult.json\" ! queue ! "
                                    "kmssink driver-name=xlnx plane-id=39 sync=false fullscreen-overlay=true";
 
 	// Convert the pipeline string to const gchar*
