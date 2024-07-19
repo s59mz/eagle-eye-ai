@@ -148,15 +148,15 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
 # Building the Docker Image
 
-1. Update the RTSP IP camera URL before start to build your application (you can also change it later too)
+1. Update the RTSP IP camera URL before start to build your application (you can also change this later too)
 
-    * Edit the ROS2 Launch .xml file and update the "camera_url" parameter:
+    * Edit the "run_eagle_eye_ai.sh" script file in "scripts" directory and update the "default_camera_url" parameter:
       
     ```bash
-    vi ros2_ws/src/eagle_eye_bringup/launch/follow_cam.launch.xml
+    vi scripts/run_eagle_eye_ai.sh
 
-    # uptade line #3 with your IP camera URL:
-          <param name="camera_url" value="rtsp://192.168.1.11:554/stream1"/>
+    # uptade line #18 with your IP camera URL:
+    default_camera_url="rtsp://192.168.1.11:554/stream1"
     ```
 
 2. Build the docker image for eagle-eye-ai using the below command. The building process will last about 8 min on Kria board. Cannot be build on host PC.
@@ -205,25 +205,10 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
     * Press Ctrl-C for exit
 
-    * To update the RTSP IP camera URL, edit the ROS2 Launch .xml file and update the "camera_url" parameter:
+    * To change the RTSP IP camera URL, run the startup script with camera's URL as parameter:
       
     ```bash
-    vi ros2_ws/src/eagle_eye_bringup/launch/follow_cam.launch.xml
-
-    # uptade line #3 with your IP camera URL:
-          <param name="camera_url" value="rtsp://192.168.1.11:554/stream1"/>
+    ./run_eagle_eye_ai.sh rtsp://192.168.1.20:554/stream2
     ```
 
-    * Compile the ROS2 launch package
-
-    ```bash
-    colcon build --packages-select eagle_eye_bringup
-    source install/setup.bash
-    ```
-        
-    * And launch the application again.
-
-    ```bash
-    ./run_eagle_eye_ai.sh
-    ```
-
+    
