@@ -173,7 +173,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
 # Run the Application
 
-1.  In the running Eagle-EyexAI Docker container using the command: 
+1.  In the running Eagle-Eye-AI Docker container use the command: 
 
     ```bash
     ./run_eagle_eye_ai.sh
