@@ -201,7 +201,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     ./run_eagle_eye_ai.sh
     ```
 
-    You should be able to see the images the camera is capturing on the monitor connected to the board, and when there's face captured by the camera, there should be blue box drawn around the face, and the box should follow the movement of the face. The camera rotator should start moving, so the camera follows the closest detected face and the blue box with the face should stays in the middle of the screen.
+    You should see the camera’s captured images on the monitor connected to the board. When a face is detected, a blue box will appear around it, tracking the face as it moves. The camera rotator should also move to keep the closest detected face in the center of the screen, with the blue box remaining around the face.
 
     * Press Ctrl-C for exit
 
