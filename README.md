@@ -83,7 +83,16 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
 7. Install Docker from [here](https://docs.docker.com/engine/install/ubuntu/).
 
-8. Get the latest kr260-eagle-eye firmware package:
+9. Enable your user to properly use the docker commands without using sudo for every command. 
+
+    ```bash
+    sudo groupadd docker
+    sudo usermod -a -G docker  $USER
+	```
+
+# Geting the Source Code
+
+1. Get the latest kr260-eagle-eye package:
 
 	* Get the Eagle-Eye-AI gir repository from GitHub
 
@@ -91,21 +100,24 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     git clone https://github.com/s59mz/eagle-eye-ai.git
     ```
 
-	* Enter to that directory
+	* Enter to working directory
 
     ```bash
     cd eagle-eye-ai
     ```
 
-	* Install firmware binaries
+2. Install firmware binaries.
+
+   This would instal the .bit.bin, .xclbin, .dtbo and .json files to the Kria board /lib/firmware/xilinx/kr260-eagle-eye firmware location.
 
     ```bash
-    sudo apt install ./fpga-firmware/firmware-kr260-eagle-eye.deb
+    cp fpga-firmware/firmware-kr260-eagle-eye.deb /tmp
+    sudo apt install /tmp/firmware-kr260-eagle-eye.deb
     ```
 
-9. Dynamically load the application package:
+3. Dynamically load the firmware package:
 
-    The firmware consist of bitstream, device tree overlay (dtbo) file. The firmware is loaded dynamically on user request once Linux is fully booted. The xmutil utility can be used for that purpose.
+    The firmware consist of bitstream, binary header and device tree overlay (dtbo) file. The firmware is loaded dynamically on user request once Linux is fully booted. The xmutil utility can be used for that purpose.
 
     * Disable the desktop environment:
 
@@ -134,38 +146,46 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
       sudo xmutil loadapp kr260-eagle-eye
        ```
 
-10. Enable your user to properly use the docker commands without using sudo for every command. 
+# Building the Docker Image
 
+1. Update the RTSP IP camera URL before start to build your application (you can also change it later too)
+
+    * Edit the ROS2 Launch .xml file and update the "camera_url" parameter:
+      
     ```bash
-    sudo groupadd docker
-    sudo usermod -a -G docker  $USER
-	```
+    vi ros2_ws/src/eagle_eye_bringup/launch/follow_cam.launch.xml
 
-11. Build the docker image for eagle-eye-ai using the below command. The building process will last about 8 min on Kria board. Cannot be build on host PC.
+    # uptade line #3 with your IP camera URL:
+          <param name="camera_url" value="rtsp://192.168.1.11:554/stream1"/>
+    ```
+
+2. Build the docker image for eagle-eye-ai using the below command. The building process will last about 8 min on Kria board. Cannot be build on host PC.
 
     ```bash
     ./build.sh
     ```
 
-12. Launch the docker using the below command
+# Launching the Docker Image
+
+1. Launch the docker image using the below command
 
     ```bash
     ./run.sh
     ```
 
-    It will launch the eagle-eye image in a new container
+    It will launch the eagle-eye docker image in a new container
 
     ```bash
     root@xlnx-docker/#
     ```
 
-    Optionally, you can run an empty ROS2 docker with GStreamer and VVAS support for testing your own ROS2 applications by command below
+2. Optionally, you can run an empty ROS2 docker image with preinstalled GStreamer and VVAS support for testing your own ROS2/Gstreamer applications by command below:
 
     ```bash
     ./ros2_humble_run.sh
     ```
 
-14. The storage volume on the SD card is limited with multiple dockers. You can use following command to remove the existing container.
+3. The storage volume on the SD card is limited with multiple dockers. You can use following command to remove the existing container.
 
     ```bash
     docker rmi --force eagle-eye-ai
@@ -173,7 +193,9 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
 # Run the Application
 
-1.  In the running Eagle-Eye-AI docker container use the command: 
+1.  In the running Eagle-Eye-AI docker container 
+
+    * Launch the folowing command:
 
     ```bash
     ./run_eagle_eye_ai.sh
@@ -181,5 +203,17 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
     You should be able to see the images the camera is capturing on the monitor connected to the board, and when there's face captured by the camera, there should be blue box drawn around the face, and the box should follow the movement of the face. The camera rotator should start moving, so the camera follows the closest detected face and the blue box with the face should stays in the middle of the screen.
 
+    * Press Ctrl-C for exit
+
+    * To update the RTSP IP camera URL, edit the ROS2 Launch .xml file and update the "camera_url" parameter:
+      
+    ```bash
+    vi ros2_ws/src/eagle_eye_bringup/launch/follow_cam.launch.xml
+
+    # uptade line #3 with your IP camera URL:
+          <param name="camera_url" value="rtsp://192.168.1.11:554/stream1"/>
+    ```
+
+    * And launch the application again.
 
 
