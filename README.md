@@ -94,7 +94,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
 1. Get the latest kr260-eagle-eye package:
 
-	* Get the Eagle-Eye-AI gir repository from GitHub
+	* Get the Eagle-Eye-AI git repository from GitHub
 
     ```bash
     git clone https://github.com/s59mz/eagle-eye-ai.git
@@ -108,7 +108,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
 2. Install firmware binaries.
 
-   This would instal the .bit.bin, .xclbin, .dtbo and .json files to the Kria board /lib/firmware/xilinx/kr260-eagle-eye firmware location.
+   This would instal the .bit.bin, .xclbin, .dtbo and .json files to the Kria board /lib/firmware/xilinx/kr260-eagle-eye firmware location:
 
     ```bash
     cp fpga-firmware/firmware-kr260-eagle-eye.deb /tmp
@@ -214,6 +214,16 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
           <param name="camera_url" value="rtsp://192.168.1.11:554/stream1"/>
     ```
 
+    * Compile the ROS2 launch package
+
+    ```bash
+    colcon build --packages-select eagle_eye_bringup
+    source install/setup.bash
+    ```
+        
     * And launch the application again.
 
+    ```bash
+    ./run_eagle_eye_ai.sh
+    ```
 
