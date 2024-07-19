@@ -1,6 +1,8 @@
 <launch>
+    <arg name="camera_url" default="rtsp://192.168.1.11:554/stream1" />
+
     <node pkg="eagle_eye_pkg" exec="gstreamer_pipeline" name="gstreamer_pipeline">
-       <param name="camera_url" value="rtsp://192.168.1.11:554/stream1"/>
+       <param name="camera_url" value="$(var camera_url)" />
     </node>
 
     <node pkg="rotator_py_pkg" exec="rotator_controller" name="rotator_controller">
