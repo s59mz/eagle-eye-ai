@@ -151,7 +151,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 1. Update the RTSP IP camera URL before start to build your application (you can also change this later too)
 
     * Edit the "run_eagle_eye_ai.sh" script file in "scripts" directory and update the "default_camera_url" parameter:
-      
+
     ```bash
     vi scripts/run_eagle_eye_ai.sh
 
@@ -191,7 +191,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     docker rmi --force eagle-eye-ai
     ```
 
-# Run the Application
+# Running the Application
 
 1.  In the running Eagle-Eye-AI docker container 
 
