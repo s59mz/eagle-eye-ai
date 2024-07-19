@@ -90,7 +90,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     sudo usermod -a -G docker  $USER
 	```
 
-# Geting the Source Code
+# Geting the Application Package
 
 1. Get the latest kr260-eagle-eye package:
 
@@ -106,16 +106,16 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     cd eagle-eye-ai
     ```
 
-2. Install firmware binaries.
+# Install Firmware Binaries.
 
-   This would instal the .bit.bin, .xclbin, .dtbo and .json files to the Kria board /lib/firmware/xilinx/kr260-eagle-eye firmware location:
+1. The following procedure would instal the .bit.bin, .xclbin, .dtbo and .json files to the Kria board's "/lib/firmware/xilinx/kr260-eagle-eye" file location:
 
     ```bash
     cp fpga-firmware/firmware-kr260-eagle-eye.deb /tmp
     sudo apt install /tmp/firmware-kr260-eagle-eye.deb
     ```
 
-3. Dynamically load the firmware package:
+2. Dynamically load the firmware package:
 
     The firmware consist of bitstream, binary header and device tree overlay (dtbo) file. The firmware is loaded dynamically on user request once Linux is fully booted. The xmutil utility can be used for that purpose.
 
