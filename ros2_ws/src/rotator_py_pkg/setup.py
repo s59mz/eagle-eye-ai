@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             "rotator_controller = rotator_py_pkg.rotator_controller:main",
-            "camera_controller = rotator_py_pkg.camera_controller:main"
+            "camera_controller = rotator_py_pkg.camera_controller:main",
+            "led_controller = rotator_py_pkg.led_controller:main"
         ],
     },
 )

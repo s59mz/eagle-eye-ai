@@ -9,6 +9,8 @@
 
   <depend>rclpy</depend>
   <depend>serial</depend>
+  <depend>os</depend>
+  <depend>mmap</depend>
   <depend>rotator_interfaces</depend>
   <depend>eagle_eye_interfaces</depend>
 

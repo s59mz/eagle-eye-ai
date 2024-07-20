@@ -15,5 +15,8 @@
        <param name="updating_period" value="0.2"/>
        <param name="frame_timeout" value="5"/>
     </node>
+
+    <node pkg="rotator_py_pkg" exec="led_controller" name="led_controller">
+    </node>
 </launch>
 
