@@ -112,7 +112,8 @@ class RotatorControllerNode(Node):
 
     def send_message(self):
         # Send Pelco-D message via serial port
-        self.serial_.write(self.pelcod_message_)
+        if (self.serial_):
+            self.serial_.write(self.pelcod_message_)
 
     def open_serial_port(self, port, baudrate=9600, timeout=1):
         # Open serial port for communication
@@ -127,6 +128,17 @@ class RotatorControllerNode(Node):
 
     def destroy_node(self):
         if (self.serial_):
+            # Turn off the lamp
+            switch_cmd = SwitchCmd()
+            switch_cmd.switch_on = False
+            self.callback_switch_control(switch_cmd)
+
+            # Turn off the motor
+            motor_cmd = MotorCmd()
+            motor_cmd.pan_speed = 0
+            motor_cmd.tilt_speed = 0
+            self.callback_motor_control(motor_cmd)
+
             # Close serial port
             self.serial_.close()
             self.serial_ = None

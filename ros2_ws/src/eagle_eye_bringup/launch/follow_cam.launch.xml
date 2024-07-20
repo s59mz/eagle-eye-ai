@@ -16,7 +16,7 @@
        <param name="frame_timeout" value="5"/>
     </node>
 
-    <node pkg="rotator_py_pkg" exec="led_controller" name="led_controller">
-    </node>
+    <node pkg="rotator_py_pkg" exec="led_controller" name="led_controller" />
+    <node pkg="rotator_py_pkg" exec="btn_controller" name="btn_controller" />
 </launch>
 
