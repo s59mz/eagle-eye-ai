@@ -134,6 +134,7 @@ class RotatorControllerNode(Node):
 
         # Reset input buffer
         self.serial_.flush()
+        self.serial_.reset_output_buffer()
         self.serial_.reset_input_buffer()
 
         # Read Roll, Pitch and Yawn Holding registers at offset 0x3d, device address=80
