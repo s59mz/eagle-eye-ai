@@ -8,10 +8,10 @@
       "config": {
           "fps_interval" : 10,
           "font_size" : 2,
-          "font" : 3,
-          "thickness" : 2,
+          "font" : 0,
+          "thickness" : 4,
           "debug_level" : 0,
-          "label_color" : { "blue" : 0, "green" : 0, "red" : 255 },
+          "label_color" : { "blue" : 240, "green" : 240, "red" : 240 },
           "label_filter" : [ "class", "probability" ],
           "classes" : [
           ]
