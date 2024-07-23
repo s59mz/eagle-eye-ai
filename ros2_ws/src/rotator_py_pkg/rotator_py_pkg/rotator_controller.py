@@ -2,10 +2,12 @@
 
 import rclpy
 import serial
+from pymodbus.client import ModbusSerialClient as ModbusClient
 
 from rclpy.node import Node
 
 from rotator_interfaces.msg import MotorCmd, SwitchCmd
+from eagle_eye_interfaces.msg import CameraOrientation
 
 
 class RotatorControllerNode(Node):
@@ -28,6 +30,11 @@ class RotatorControllerNode(Node):
         # Initialize Pelco-D message buffer
         self.pelcod_message_ = self.create_pelco_d_message()
 
+        # Initialize Modbus client with pymodbus
+        self.modbus_client_ = ModbusClient(method='rtu', port=self.port_, 
+                handle_local_echo=True, baudrate=self.baudrate_, timeout=1)
+        self.modbus_client_.connect()
+
         # Create subscribers for motor control and switch control topics
         self.sub_motor_control = self.create_subscription(
             MotorCmd, "motor_control", self.callback_motor_control, 10
@@ -35,6 +42,14 @@ class RotatorControllerNode(Node):
         self.sub_switch_control = self.create_subscription(
             SwitchCmd, "switch_control", self.callback_switch_control, 10
         )
+
+        # create camera orientation publisher
+        self.pub_cam_orient_ = self.create_publisher(
+            CameraOrientation, "camera_orientation", 10
+        )
+
+        # create inclinometer reading timer
+        self.inclinometer_timer_ = self.create_timer(1.0, self.callback_inclinometer) # read every 1000ms
 
         self.get_logger().info("Node Created")
 
@@ -115,6 +130,47 @@ class RotatorControllerNode(Node):
         if (self.serial_):
             self.serial_.write(self.pelcod_message_)
 
+    def callback_inclinometer(self):
+
+        # Reset input buffer
+        self.serial_.flush()
+        self.serial_.reset_input_buffer()
+
+        # Read Roll, Pitch and Yawn Holding registers at offset 0x3d, device address=80
+        result = self.modbus_client_.read_holding_registers(0x3d, 3, slave=80)
+
+        if result.isError():
+            self.get_logger().info(f"Modbus Error: Read Holding reg")
+            return
+
+        value=[0]*3
+
+        # Handling negative numbers
+        for i in range(0, 3):
+            if (result.registers[i]>32767):
+                value[i]=result.registers[i]-65536
+            else:
+                value[i]=result.registers[i]
+
+        # convert values to degrees
+        angle_degree = [value[i] / 32768.0 * 180.0 for i in range(0, 3)]
+
+        # Yawn
+        azimuth = -angle_degree[2]
+        if azimuth < 0:
+            azimuth += 360.0
+
+        # Pitch
+        elevation = -angle_degree[1]
+
+        # Create message for publishing
+        msg = CameraOrientation()
+        msg.azimuth = azimuth
+        msg.elevation = elevation
+
+        # publish camera orientation
+        self.pub_cam_orient_.publish(msg)
+
     def open_serial_port(self, port, baudrate=9600, timeout=1):
         # Open serial port for communication
         try:
@@ -140,6 +196,7 @@ class RotatorControllerNode(Node):
             self.callback_motor_control(motor_cmd)
 
             # Close serial port
+            self.modbus_client_.close()
             self.serial_.close()
             self.serial_ = None
 

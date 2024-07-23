@@ -43,6 +43,9 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
 # Install PySerial
 RUN pip3 install pyserial
 
+# Install PyModbus
+RUN pip3 install pymodbus
+
 # Source the ROS2 setup script
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> ~/.bashrc
