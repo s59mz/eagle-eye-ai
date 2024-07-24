@@ -1,6 +1,7 @@
 #include <gst/gst.h>
 #include <rclcpp/rclcpp.hpp>
 #include "eagle_eye_interfaces/msg/face_detect.hpp"
+#include "eagle_eye_interfaces/msg/camera_orientation.hpp"
 
 #include "eagle_eye_pkg/cameradata.h"
 #include "eagle_eye_pkg/gstinferencemeta.h"
@@ -15,7 +16,12 @@ public:
 	this->declare_parameter<std::string>("camera_url", "rtsp://192.168.1.11:554/stream1");
 	this->get_parameter("camera_url", camera_url_);
 
-        publisher_ = this->create_publisher<eagle_eye_interfaces::msg::FaceDetect>("face_detect", 10);
+        face_detect_publisher_ = this->create_publisher<eagle_eye_interfaces::msg::FaceDetect>("face_detect", 10);
+
+        inclinometer_subscription_ = this->create_subscription<eagle_eye_interfaces::msg::CameraOrientation>(
+		"camera_orientation", 10, 
+		std::bind(&GStreamerPipeline::inclinometer_callback, this, std::placeholders::_1)
+        );
 
         // Initialize GStreamer
         gst_init(nullptr, nullptr);
@@ -131,7 +137,7 @@ public:
             msg.face_detected = false;
         }
 
-        publisher_->publish(msg);
+        face_detect_publisher_->publish(msg);
     }
 
     static void handle_inference_meta(GstMeta *meta, GStreamerPipeline *gsnode) {
@@ -193,35 +199,54 @@ public:
         return GST_PAD_PROBE_OK;
     }
 
+    void inclinometer_callback(const eagle_eye_interfaces::msg::CameraOrientation::SharedPtr msg) {
+	{   // received data from subscriber, save them with a lock guard
+            std::lock_guard<std::mutex> lock(this->mutex_);
+
+            this->camera_orientation_.azimuth = msg->azimuth;
+            this->camera_orientation_.elevation = msg->elevation;
+	}
+    }
+
     // sent camera orientation data to gstreamer DRAW element
     static void send_camera_orientation(GstMeta *meta, GStreamerPipeline *gsnode) {
-		static CameraOrientation *cam_orient = nullptr;
+	 
+	// struct that be shares between ros2 node and vvas
+        static CameraOrientation *cam_orient = nullptr;
 
-		if (!cam_orient) {
-			cam_orient = new CameraOrientation();
-		}
+        if (!cam_orient) {
+            cam_orient = new CameraOrientation();
+	}
 		 
+	// bet inferece meta data struct
         GstInferenceMeta *inference_meta = reinterpret_cast<GstInferenceMeta *>(meta);
 			
-		if (inference_meta && inference_meta->prediction) {
-			GstInferencePrediction *prediction = inference_meta->prediction;
+	if (inference_meta && inference_meta->prediction) {
 
-			if (prediction && prediction->predictions) {
+		// get inference prediction parent data struct
+		GstInferencePrediction *prediction = inference_meta->prediction;
+
+		if (prediction && prediction->predictions) {
 			
-				// Node that holds all detected faces (child nodes)
-				GNode *predictions = prediction->predictions;
+			// get Node that holds all detected faces (child nodes)
+			GNode *predictions = prediction->predictions;
 
-				for (GNode *node = predictions->children; node; node = node->next) {
-				    GstInferencePrediction *child_pred = (GstInferencePrediction *) node->data;
+			// walk through linked list of all detected faces, we populate all of them just in case..
+			for (GNode *node = predictions->children; node; node = node->next) {
+				GstInferencePrediction *child_pred = (GstInferencePrediction *) node->data;
 
-					child_pred->reserved_1 = cam_orient;
+				// Attach the shared data struct to the unused pointer of GstInferencePrediction struct
+				child_pred->reserved_1 = cam_orient;
 
-					cam_orient->azimuth = gsnode->camera_orientation_.azimuth;
-					cam_orient->elevation = gsnode->camera_orientation_.elevation;
+				{   // update shared structure with inclinometer data with guard lock
+				    std::lock_guard<std::mutex> lock(gsnode->mutex_);
+
+				    cam_orient->azimuth = gsnode->camera_orientation_.azimuth;
+				    cam_orient->elevation = gsnode->camera_orientation_.elevation;
 				}
-
 			}
 		}
+	}
     }
 
     static GstPadProbeReturn draw_probe_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
@@ -248,11 +273,16 @@ public:
     }
 
 private:
+    std::mutex mutex_;
+
     GstElement *pipeline_;
     GstElement *ima_probe_;
     GstElement *draw_probe_;
-    rclcpp::Publisher<eagle_eye_interfaces::msg::FaceDetect>::SharedPtr publisher_;
+
     CameraOrientation camera_orientation_;
+
+    rclcpp::Publisher<eagle_eye_interfaces::msg::FaceDetect>::SharedPtr face_detect_publisher_;
+    rclcpp::Subscription<eagle_eye_interfaces::msg::CameraOrientation>::SharedPtr inclinometer_subscription_;
 };
 
 int main(int argc, char *argv[]) {
