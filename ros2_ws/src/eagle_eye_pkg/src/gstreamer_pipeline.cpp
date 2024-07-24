@@ -2,7 +2,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include "eagle_eye_interfaces/msg/face_detect.hpp"
 
-#include "eagle_eye_pkg/gst_inference_meta.h"
+#include "eagle_eye_pkg/cameradata.h"
+#include "eagle_eye_pkg/gstinferencemeta.h"
 
 class GStreamerPipeline : public rclcpp::Node {
 public:
@@ -25,9 +26,9 @@ public:
                                    "video/x-raw,format=NV12 ! tee name=t ! queue ! "
                                    "vvas_xmultisrc kconfig=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/preprocess.json\" ! queue ! "
                                    "vvas_xfilter kernels-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/aiinference.json\" ! "
-                                   "ima.sink_master vvas_xmetaaffixer name=ima ima.src_master ! queue name=probe max-size-buffers=1 leaky=2 ! fakesink "
+                                   "ima.sink_master vvas_xmetaaffixer name=ima ima.src_master ! fakesink "
                                    "t. ! queue max-size-buffers=1 leaky=2 ! ima.sink_slave_0 ima.src_slave_0 ! queue ! "
-                                   "vvas_xfilter name=\"draw\" kernels-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/drawresult.json\" ! queue ! "
+                                   "vvas_xfilter name=draw kernels-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/drawresult.json\" ! queue ! "
                                    "kmssink driver-name=xlnx plane-id=39 sync=false fullscreen-overlay=true";
 
 	// Convert the pipeline string to const gchar*
@@ -41,26 +42,55 @@ public:
             return;
         }
 
-        // Get the vvas_xmetaaffixer element
-        probe_ = gst_bin_get_by_name(GST_BIN(pipeline_), "probe");
-        if (!probe_) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to get probe element");
+        // Get the ima vvas_xmetaaffixer element
+        ima_probe_ = gst_bin_get_by_name(GST_BIN(pipeline_), "ima");
+        if (!ima_probe_) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to get ima element");
             gst_object_unref(pipeline_);
             rclcpp::shutdown();
             return;
         }
 
-        // Attach a probe to the src pad of the probe element
-        GstPad *src_pad = gst_element_get_static_pad(probe_, "src");
-        if (!src_pad) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to get src pad from probe");
-            gst_object_unref(probe_);
+        // Attach a probe to the src pad of the element
+        GstPad *ima_pad = gst_element_get_static_pad(ima_probe_, "src_master");
+        if (!ima_pad) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to get src pad from ima element");
+            gst_object_unref(ima_probe_);
             gst_object_unref(pipeline_);
             rclcpp::shutdown();
             return;
         }
-        gst_pad_add_probe(src_pad, GST_PAD_PROBE_TYPE_BUFFER, probe_callback, this, nullptr);
-        gst_object_unref(src_pad);
+
+	// Attach callback to the probe
+        gst_pad_add_probe(ima_pad, GST_PAD_PROBE_TYPE_BUFFER, ima_probe_callback, this, nullptr);
+        gst_object_unref(ima_pad);
+
+        // Get the draw vvas_filter element
+        draw_probe_ = gst_bin_get_by_name(GST_BIN(pipeline_), "draw");
+        if (!draw_probe_) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to get draw element");
+            gst_object_unref(pipeline_);
+            rclcpp::shutdown();
+            return;
+        }
+
+        // Attach a draw probe to the src pad of the draw element
+        GstPad *draw_pad = gst_element_get_static_pad(draw_probe_, "sink");
+        if (!draw_pad) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to get sink pad from draw probe");
+            gst_object_unref(draw_probe_);
+            gst_object_unref(pipeline_);
+            rclcpp::shutdown();
+            return;
+        }
+	
+	// Attach callback to the probe
+        gst_pad_add_probe(draw_pad, GST_PAD_PROBE_TYPE_BUFFER, draw_probe_callback, this, nullptr);
+        gst_object_unref(draw_pad);
+
+	// initialize camera orientation structs
+	camera_orientation_.azimuth = 120.12;
+	camera_orientation_.elevation = -2.56;
 
         // Start playing
         gst_element_set_state(pipeline_, GST_STATE_PLAYING);
@@ -69,7 +99,8 @@ public:
     ~GStreamerPipeline() {
         // Free resources
         gst_element_set_state(pipeline_, GST_STATE_NULL);
-        gst_object_unref(probe_);
+        gst_object_unref(draw_probe_);
+        gst_object_unref(ima_probe_);
         gst_object_unref(pipeline_);
     }
 
@@ -103,7 +134,7 @@ public:
         publisher_->publish(msg);
     }
 
-    static void handle_inference_meta(GstMeta *meta, GStreamerPipeline *node) {
+    static void handle_inference_meta(GstMeta *meta, GStreamerPipeline *gsnode) {
         GstInferenceMeta *inference_meta = reinterpret_cast<GstInferenceMeta *>(meta);
 
         if (inference_meta && inference_meta->prediction) {
@@ -112,7 +143,7 @@ public:
             // Parent bbox holds the resolution of the inference frame
             BoundingBox *parent_bbox = &prediction->bbox;
 
-            // Note that holds all detected faces (child nodes)
+            // Node that holds all detected faces (child nodes)
             GNode *predictions = prediction->predictions;
 
             if (predictions) {
@@ -129,16 +160,16 @@ public:
                 }
 
                 if (largest_child_pred) {
-                    node->publish_max_bounding_box(parent_bbox, &largest_child_pred->bbox);
+                    gsnode->publish_max_bounding_box(parent_bbox, &largest_child_pred->bbox);
                     return;
                 }
             }
         }
 
-        node->publish_max_bounding_box(nullptr, nullptr);
+        gsnode->publish_max_bounding_box(nullptr, nullptr);
     }
 
-    static GstPadProbeReturn probe_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+    static GstPadProbeReturn ima_probe_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
         if (!pad) {
             return GST_PAD_PROBE_OK;
         }
@@ -162,10 +193,66 @@ public:
         return GST_PAD_PROBE_OK;
     }
 
+    // sent camera orientation data to gstreamer DRAW element
+    static void send_camera_orientation(GstMeta *meta, GStreamerPipeline *gsnode) {
+		static CameraOrientation *cam_orient = nullptr;
+
+		if (!cam_orient) {
+			cam_orient = new CameraOrientation();
+		}
+		 
+        GstInferenceMeta *inference_meta = reinterpret_cast<GstInferenceMeta *>(meta);
+			
+		if (inference_meta && inference_meta->prediction) {
+			GstInferencePrediction *prediction = inference_meta->prediction;
+
+			if (prediction && prediction->predictions) {
+			
+				// Node that holds all detected faces (child nodes)
+				GNode *predictions = prediction->predictions;
+
+				for (GNode *node = predictions->children; node; node = node->next) {
+				    GstInferencePrediction *child_pred = (GstInferencePrediction *) node->data;
+
+					child_pred->reserved_1 = cam_orient;
+
+					cam_orient->azimuth = gsnode->camera_orientation_.azimuth;
+					cam_orient->elevation = gsnode->camera_orientation_.elevation;
+				}
+
+			}
+		}
+    }
+
+    static GstPadProbeReturn draw_probe_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+        if (!pad) {
+            return GST_PAD_PROBE_OK;
+        }
+
+        GStreamerPipeline *node = reinterpret_cast<GStreamerPipeline *>(user_data);
+
+        GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+        if (!buffer) {
+            return GST_PAD_PROBE_OK;
+        }
+
+	// get metadata of current buffer
+        static GType api_type = g_type_from_name("GstVvasInferenceMetaAPI");
+        GstMeta *meta = gst_buffer_get_meta(buffer, api_type);
+
+        if (meta) {
+	    send_camera_orientation(meta, node);
+        }
+
+        return GST_PAD_PROBE_OK;
+    }
+
 private:
     GstElement *pipeline_;
-    GstElement *probe_;
+    GstElement *ima_probe_;
+    GstElement *draw_probe_;
     rclcpp::Publisher<eagle_eye_interfaces::msg::FaceDetect>::SharedPtr publisher_;
+    CameraOrientation camera_orientation_;
 };
 
 int main(int argc, char *argv[]) {

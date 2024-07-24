@@ -12,6 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *  
+ * Modified by: Matjaz Zibert S59MZ
+ * 	Added: camera orientation status text when detected face
  */
 
 #include <opencv2/core.hpp>
@@ -24,6 +27,7 @@
 #include <vvas/vvas_kernel.h>
 #include <gst/vvas/gstinferencemeta.h>
 #include <chrono>
+#include <iomanip>
 
 #include "vvas_airender.hpp"
 
@@ -219,6 +223,51 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
         rectangle (frameinfo->chromaImg, Point (new_xmin / 2,
               new_ymin / 2), Point (new_xmax / 2,
               new_ymax / 2), Scalar (uvScalar), kpriv->line_thickness, 1, 0);
+
+	//
+	// Show Camera Orientation
+	//
+
+	// place a static text on a screen
+	std::string camera_text = "";
+	    
+	// place a dynamic text on a screen
+	if (prediction && prediction->reserved_1) {
+	    std::stringstream ss_azimuth, ss_elevation;
+
+		CameraOrientation * cam_orient = reinterpret_cast<CameraOrientation *>(prediction->reserved_1);
+
+		// Format azimuth
+		ss_azimuth << std::setw(6) << std::setfill(' ') << std::fixed << std::setprecision(2) << cam_orient->azimuth;
+
+		// Format elevation if needed similarly
+		ss_elevation << std::setw(6) << std::setfill(' ') << std::fixed << std::setprecision(2) << cam_orient->elevation;
+
+		// Combine the formatted strings into a single text
+		camera_text = "Face Tracking: AZ:" + ss_azimuth.str() + ", EL:" + ss_elevation.str();
+
+		// Calculate text size
+		int baseLine;
+		Size text_size = getTextSize(camera_text, kpriv->font, kpriv->font_size, kpriv->line_thickness, &baseLine);
+
+		// Get frame dimensions from properties
+		int frame_width = frameinfo->inframe->props.width;
+		int frame_height = frameinfo->inframe->props.height;
+
+		// Text position
+		int x = (frame_width - text_size.width) / 2;
+		int y = frame_height - baseLine - 30;
+
+		convert_rgb_to_yuv_clrs(kpriv->label_color, &yScalar, &uvScalar);
+
+		// Draw text on Y plane
+		putText (frameinfo->lumaImg, camera_text, cv::Point (x, y), kpriv->font, 
+							 kpriv->font_size, Scalar (yScalar), kpriv->line_thickness, 1);
+
+		// Draw text on UV plane
+		putText (frameinfo->chromaImg, camera_text, cv::Point (x / 2, y / 2), kpriv->font, 
+							 kpriv->font_size / 2, Scalar (uvScalar), kpriv->line_thickness, 1);
+	   }
       }
 
       if (label_present) {
@@ -241,32 +290,6 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
                 new_ymin / 2 + frameinfo->y_offset / 2), kpriv->font,
             kpriv->font_size / 2, Scalar (uvScalar), 1, 1);
       }
-
-        // place a static text on a screen
-        string static_text = "Cam Position: Stable";
-
-        // Calculate text size
-        int baseLine;
-        Size text_size = getTextSize(static_text, kpriv->font, kpriv->font_size, kpriv->line_thickness, &baseLine);
-
-        // Adjust text size for UV plane
-        Size text_size_uv(text_size.width / 2, text_size.height / 2);
-
-        // Get frame dimensions from properties
-        int frame_width = frameinfo->inframe->props.width;
-        int frame_height = frameinfo->inframe->props.height;
-
-        // Text position
-        int x = (frame_width - text_size.width) / 2;
-        int y = frame_height - baseLine - 30;
-
-        convert_rgb_to_yuv_clrs(kpriv->label_color, &yScalar, &uvScalar);
-
-        // Draw text on Y plane
-        putText (frameinfo->lumaImg, static_text, cv::Point (x, y), kpriv->font, kpriv->font_size, Scalar (yScalar), kpriv->line_thickness, 1);
-
-        // Draw text on UV plane
-        putText (frameinfo->chromaImg, static_text, cv::Point (x / 2, y / 2), kpriv->font, kpriv->font_size / 2, Scalar (uvScalar), kpriv->line_thickness, 1);
 
     } else if (frameinfo->inframe->props.fmt == VVAS_VFMT_BGR8) {
       LOG_MESSAGE (LOG_LEVEL_DEBUG, "Drawing rectangle for BGR image");

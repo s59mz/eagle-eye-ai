@@ -12,10 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *    
+ * Modifiedy by: Matjaz Zibert S59MZ
+ *      Added: camera orientation status text when detected face
  */
 
 #ifndef __VVAS_AIRENDER_H__
 #define __VVAS_AIRENDER_H__
+
+// custom made structure shared in GstInferenceMeta prediction structure in reserved_1 element 
+typedef struct _CameraOrientation
+{
+  float azimuth;
+  float elevation;
+} CameraOrientation;
 
 enum
 {
