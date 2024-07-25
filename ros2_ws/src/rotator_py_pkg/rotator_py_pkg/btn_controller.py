@@ -1,3 +1,26 @@
+#!/usr/bin/env python3
+#
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+# Push-Button Controller
+#   - Sends the manual camera movement commands to Rotator Controller
+#   - Reads the GPIO register status of two buttons and sends
+#     commands through ROS2 topic messages
+#   - Left button moves camera left, right button moves right
+#   - Both buttons pressed move the camera's tilt motor. It tilts
+#     the camera up or down, depends on which button is pressed first
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
+
+
 import rclpy
 from rclpy.node import Node
 from rotator_interfaces.msg import MotorCmd

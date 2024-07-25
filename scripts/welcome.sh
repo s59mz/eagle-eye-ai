@@ -1,4 +1,19 @@
+#
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+#
 # Eagle-Eye-AI welcome screen 
+#
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
 
 echo -e "\e[1;90m
 ================================================================

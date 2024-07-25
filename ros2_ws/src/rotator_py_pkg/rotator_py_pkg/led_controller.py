@@ -1,3 +1,25 @@
+#!/usr/bin/env python3
+#
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+# Led Controller
+#   - Controls two status LEDs on a custom made RS-485 PMOD module
+#     through the register of the AXI GPIO IP block
+#   - Listens for rotator motor commands on ROS2 topic and 
+#     turns On the Red or Blue LED when Pan or Tilt motor 
+#     is active, respectively
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
+
+
 import rclpy
 from rclpy.node import Node
 from rotator_interfaces.msg import MotorCmd

@@ -1,5 +1,10 @@
 # (C) Copyright 2020 - 2022 Xilinx, Inc.
 # SPDX-License-Identifier: Apache-2.0
+#
+# Updated for custom made RS-485 PMOD module for Eagle-Eye-AI Application
+#
+# Link to module: 
+#    https://github.com/s59mz/kicad-pmod_rs485
 
 #MIPI
 set_property DIFF_TERM_ADV TERM_100 [get_ports {mipi_phy_if_clk_p}]

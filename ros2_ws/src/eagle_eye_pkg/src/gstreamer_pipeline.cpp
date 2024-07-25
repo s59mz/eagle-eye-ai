@@ -1,3 +1,28 @@
+/*
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+# GStreamer Pipeline
+#   - Creates a GStreamer pipeline based on Smartcam demo app
+#     in a ROS2 Node with RTSP video camera stream as an input.
+#   - Added a probe to GStreamer element that extract the 
+#     coordinates of the detected face and published that data
+#     on ROS2 topic.
+#   - The probe also populates Inference Metadata with the 
+#     data read from the camera Inclinometer, so the VVAS Draw
+#     Filter can show the Camera's Azimuth and Elevation Status
+#     in the video stream.
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+*/
+
+
 #include <gst/gst.h>
 #include <rclcpp/rclcpp.hpp>
 #include "eagle_eye_interfaces/msg/face_detect.hpp"
@@ -6,6 +31,8 @@
 #include "eagle_eye_pkg/cameradata.h"
 #include "eagle_eye_pkg/gstinferencemeta.h"
 
+
+// ROS2 Node Class
 class GStreamerPipeline : public rclcpp::Node {
 public:
     GStreamerPipeline()
@@ -16,8 +43,10 @@ public:
 	this->declare_parameter<std::string>("camera_url", "rtsp://192.168.1.11:554/stream1");
 	this->get_parameter("camera_url", camera_url_);
 
+	// create a publisher
         face_detect_publisher_ = this->create_publisher<eagle_eye_interfaces::msg::FaceDetect>("face_detect", 10);
 
+	// create a subscriber
         inclinometer_subscription_ = this->create_subscription<eagle_eye_interfaces::msg::CameraOrientation>(
 		"camera_orientation", 10, 
 		std::bind(&GStreamerPipeline::inclinometer_callback, this, std::placeholders::_1)
@@ -40,36 +69,13 @@ public:
 	// Convert the pipeline string to const gchar*
     	const gchar *pipeline_cstr = pipeline_str.c_str();
 
-    	// Create the pipeline
+    	// Create the GStreamer pipeline
     	pipeline_ = gst_parse_launch(pipeline_cstr, nullptr);
         if (!pipeline_) {
             RCLCPP_ERROR(this->get_logger(), "Failed to create pipeline");
             rclcpp::shutdown();
             return;
         }
-
-        // Get the ima vvas_xmetaaffixer element
-        ima_probe_ = gst_bin_get_by_name(GST_BIN(pipeline_), "ima");
-        if (!ima_probe_) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to get ima element");
-            gst_object_unref(pipeline_);
-            rclcpp::shutdown();
-            return;
-        }
-
-        // Attach a probe to the src pad of the element
-        GstPad *ima_pad = gst_element_get_static_pad(ima_probe_, "src_master");
-        if (!ima_pad) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to get src pad from ima element");
-            gst_object_unref(ima_probe_);
-            gst_object_unref(pipeline_);
-            rclcpp::shutdown();
-            return;
-        }
-
-	// Attach callback to the probe
-        gst_pad_add_probe(ima_pad, GST_PAD_PROBE_TYPE_BUFFER, ima_probe_callback, this, nullptr);
-        gst_object_unref(ima_pad);
 
         // Get the draw vvas_filter element
         draw_probe_ = gst_bin_get_by_name(GST_BIN(pipeline_), "draw");
@@ -80,7 +86,7 @@ public:
             return;
         }
 
-        // Attach a draw probe to the src pad of the draw element
+        // Attach a draw probe to the sink pad of the draw element
         GstPad *draw_pad = gst_element_get_static_pad(draw_probe_, "sink");
         if (!draw_pad) {
             RCLCPP_ERROR(this->get_logger(), "Failed to get sink pad from draw probe");
@@ -90,13 +96,13 @@ public:
             return;
         }
 	
-	// Attach callback to the probe
+	// Attach  a callback to the probe
         gst_pad_add_probe(draw_pad, GST_PAD_PROBE_TYPE_BUFFER, draw_probe_callback, this, nullptr);
         gst_object_unref(draw_pad);
 
 	// initialize camera orientation structs
-	camera_orientation_.azimuth = 120.12;
-	camera_orientation_.elevation = -2.56;
+	camera_orientation_.azimuth = 0.0;
+	camera_orientation_.elevation = 0.0;
 
         // Start playing
         gst_element_set_state(pipeline_, GST_STATE_PLAYING);
@@ -106,7 +112,6 @@ public:
         // Free resources
         gst_element_set_state(pipeline_, GST_STATE_NULL);
         gst_object_unref(draw_probe_);
-        gst_object_unref(ima_probe_);
         gst_object_unref(pipeline_);
     }
 
@@ -141,65 +146,105 @@ public:
     }
 
     static void handle_inference_meta(GstMeta *meta, GStreamerPipeline *gsnode) {
+	    
+	// camera orientation struct to be shared between ros2 node and vvas library
+        static CameraOrientation *cam_orient = nullptr;
+
+        if (!cam_orient) {
+            cam_orient = new CameraOrientation();
+	}
+		 
+	// Get Inference Metadata
         GstInferenceMeta *inference_meta = reinterpret_cast<GstInferenceMeta *>(meta);
 
+	// Get the parent prediction struct
         if (inference_meta && inference_meta->prediction) {
             GstInferencePrediction *prediction = inference_meta->prediction;
 
             // Parent bbox holds the resolution of the inference frame
             BoundingBox *parent_bbox = &prediction->bbox;
 
-            // Node that holds all detected faces (child nodes)
+            // Get the linked list root Node that holds all detected faces (child nodes)
             GNode *predictions = prediction->predictions;
 
+	    // ceck if detected any faces
             if (predictions) {
                 GstInferencePrediction *largest_child_pred = nullptr;
                 guint max_width = 0;
 
+		// walk through linked list of detected faces
                 for (GNode *node = predictions->children; node; node = node->next) {
                     GstInferencePrediction *child_pred = (GstInferencePrediction *) node->data;
 
+		    // find the largest boundary box
                     if (child_pred->bbox.width > max_width) {
                         max_width = child_pred->bbox.width;
                         largest_child_pred = child_pred;
+
+			child_pred->obj_track_label = nullptr;
                     }
                 }
 
+		// check if the largest boundary box even exists
                 if (largest_child_pred) {
+		    // publish the largest one
                     gsnode->publish_max_bounding_box(parent_bbox, &largest_child_pred->bbox);
+
+		    // Also, attach the inclinometer shared data struct to the 
+		    // Unused pointer of GstInferencePrediction struct
+		    // So, the VVAS Draw Filter element can show camera orientation on the screen
+		    largest_child_pred->reserved_1 = cam_orient;
+
+		    {   // update shared structure with inclinometer data with guard lock
+		        std::lock_guard<std::mutex> lock(gsnode->mutex_);
+
+			cam_orient->azimuth = gsnode->camera_orientation_.azimuth;
+			cam_orient->elevation = gsnode->camera_orientation_.elevation;
+		    }
+
                     return;
                 }
             }
         }
 
+	// no faces detected, but we count empty frames for timeout too
         gsnode->publish_max_bounding_box(nullptr, nullptr);
     }
 
-    static GstPadProbeReturn ima_probe_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+    // The Attached GStreamer Element Probe Callback
+    static GstPadProbeReturn draw_probe_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
         if (!pad) {
             return GST_PAD_PROBE_OK;
         }
 
+	// Get the Class Node object
         GStreamerPipeline *node = reinterpret_cast<GStreamerPipeline *>(user_data);
+
+	// Get the buffer
         GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
         if (!buffer) {
             node->publish_max_bounding_box(nullptr, nullptr);
             return GST_PAD_PROBE_OK;
         }
 
+	// Look for VVAS Inference Meta frames only
         static GType api_type = g_type_from_name("GstVvasInferenceMetaAPI");
         GstMeta *meta = gst_buffer_get_meta(buffer, api_type);
 
         if (meta) {
+	    // found one, let's handle it
             handle_inference_meta(meta, node);
         } else {
+	    // Needed for counting empty frames for timeout
             node->publish_max_bounding_box(nullptr, nullptr);
         }
 
         return GST_PAD_PROBE_OK;
     }
 
+    // Inclinometer subscription callback
     void inclinometer_callback(const eagle_eye_interfaces::msg::CameraOrientation::SharedPtr msg) {
+
 	{   // received data from subscriber, save them with a lock guard
             std::lock_guard<std::mutex> lock(this->mutex_);
 
@@ -208,80 +253,18 @@ public:
 	}
     }
 
-    // sent camera orientation data to gstreamer DRAW element
-    static void send_camera_orientation(GstMeta *meta, GStreamerPipeline *gsnode) {
-	 
-	// struct that be shares between ros2 node and vvas
-        static CameraOrientation *cam_orient = nullptr;
-
-        if (!cam_orient) {
-            cam_orient = new CameraOrientation();
-	}
-		 
-	// bet inferece meta data struct
-        GstInferenceMeta *inference_meta = reinterpret_cast<GstInferenceMeta *>(meta);
-			
-	if (inference_meta && inference_meta->prediction) {
-
-		// get inference prediction parent data struct
-		GstInferencePrediction *prediction = inference_meta->prediction;
-
-		if (prediction && prediction->predictions) {
-			
-			// get Node that holds all detected faces (child nodes)
-			GNode *predictions = prediction->predictions;
-
-			// walk through linked list of all detected faces, we populate all of them just in case..
-			for (GNode *node = predictions->children; node; node = node->next) {
-				GstInferencePrediction *child_pred = (GstInferencePrediction *) node->data;
-
-				// Attach the shared data struct to the unused pointer of GstInferencePrediction struct
-				child_pred->reserved_1 = cam_orient;
-
-				{   // update shared structure with inclinometer data with guard lock
-				    std::lock_guard<std::mutex> lock(gsnode->mutex_);
-
-				    cam_orient->azimuth = gsnode->camera_orientation_.azimuth;
-				    cam_orient->elevation = gsnode->camera_orientation_.elevation;
-				}
-			}
-		}
-	}
-    }
-
-    static GstPadProbeReturn draw_probe_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
-        if (!pad) {
-            return GST_PAD_PROBE_OK;
-        }
-
-        GStreamerPipeline *node = reinterpret_cast<GStreamerPipeline *>(user_data);
-
-        GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
-        if (!buffer) {
-            return GST_PAD_PROBE_OK;
-        }
-
-	// get metadata of current buffer
-        static GType api_type = g_type_from_name("GstVvasInferenceMetaAPI");
-        GstMeta *meta = gst_buffer_get_meta(buffer, api_type);
-
-        if (meta) {
-	    send_camera_orientation(meta, node);
-        }
-
-        return GST_PAD_PROBE_OK;
-    }
-
 private:
-    std::mutex mutex_;
+    std::mutex mutex_;		// mutex for guarding between ROS2 node and VVAS library threads
 
-    GstElement *pipeline_;
-    GstElement *ima_probe_;
-    GstElement *draw_probe_;
+    GstElement *pipeline_;	// GStreamer Pipeline
+    GstElement *draw_probe_;	// GStreamer Probe on the Draw VVAS Filter element
 
-    CameraOrientation camera_orientation_;
+    CameraOrientation camera_orientation_;	// Stores cam orientation received by ROS2 subscriber
 
+    // publisher for detected face coordinates
     rclcpp::Publisher<eagle_eye_interfaces::msg::FaceDetect>::SharedPtr face_detect_publisher_;
+
+    // subscriber for receiving Camera's Inclinometer data
     rclcpp::Subscription<eagle_eye_interfaces::msg::CameraOrientation>::SharedPtr inclinometer_subscription_;
 };
 

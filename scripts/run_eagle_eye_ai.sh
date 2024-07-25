@@ -1,21 +1,27 @@
 #!/bin/bash
 #
 # Eagle-Eye-AI
-#  Startup Script tomlaunch the app  Kria KR260 Board
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
 #
 # Created by: Matjaz Zibert S59MZ - July 2024
 #
-# Design based on Kria KV260 Smartcam Demo App
+# Application's Startup Script in a Docker container
+#   - Load the app firmware and launch docker container first
 #
-# Original Smartcam link:
-#     https://github.com/Xilinx/smartcam/tree/xlnx_rel_v2022.1
-#     https://github.com/Xilinx/kria-docker/tree/xlnx_rel_v2022.1
+# Design based on Kria KV260 Smartcam Demo App by AMD
 #
-#   NOTE: This script runs on Kria board only
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
+#
+#   NOTE: This script runs on Kria board in a application's Docker container only
+#
 
 
-# Default camera_url
+# Default parameters
 default_camera_url="rtsp://192.168.1.11:554/stream1"
+serial_port="/dev/ttyUL0"
 
 # Check if a camera_url parameter is passed
 if [ -z "$1" ]; then
@@ -30,5 +36,5 @@ fi
 source install/setup.bash
 
 # Start the ROS2 launch file with the specified camera_url
-ros2 launch eagle_eye_bringup follow_cam.launch.xml camera_url:=$camera_url
+ros2 launch eagle_eye_bringup follow_cam.launch.xml camera_url:=$camera_url serial_port:=$serial_port
 

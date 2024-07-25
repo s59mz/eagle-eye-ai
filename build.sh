@@ -1,17 +1,20 @@
 #!/bin/bash
 #
-# Eagle-Eye-AI 
-#  Docker Build Script for Kria KR260 Board
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
 #
 # Created by: Matjaz Zibert S59MZ - July 2024
 #
-# Design based on Kria KV260 Smartcam Demo App
+# Build script for two docker images:
+#   - ROS2 Image - ROS2 and GStreamer based on Xilinx kria-runtime:2022.1 image
+#   - APP Image - Final application image based on the ROS2 Image
 #
-# Original Smartcam link:
-#     https://github.com/Xilinx/smartcam/tree/xlnx_rel_v2022.1
-#     https://github.com/Xilinx/kria-docker/tree/xlnx_rel_v2022.1
+# Design based on Kria KV260 Smartcam Demo App by AMD
 #
-#   NOTE: This script runs on Kria board only
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
 
 
 # Define the names of the images

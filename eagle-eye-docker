@@ -1,14 +1,22 @@
 #
-# Eagle-Eye-AI 
-# Application Dockerfile for Kria KR260 Board
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
 #
 # Created by: Matjaz Zibert S59MZ - July 2024
 #
-# Designed based on Kria KV260 Smartcam Demo App
+# Dockerfile for final Eagle-Eye-AI application Docker image
+#   - Based on ros2-humble:1.0 image
+#   - Compiled on Xilinx kria-developer:2022.1 image on Kria board
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
 #
 # Original Smartcam link:
 #     https://github.com/Xilinx/smartcam/tree/xlnx_rel_v2022.1
 #     https://github.com/Xilinx/kria-docker/tree/xlnx_rel_v2022.1
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
 #
 
 

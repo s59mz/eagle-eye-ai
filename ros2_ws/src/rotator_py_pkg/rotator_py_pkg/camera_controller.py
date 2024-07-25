@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+#
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+# Camera Controller
+#   - Moves tha camera to follow a detected face
+#   - Listens for the detected face coordinates on ROS2 topic
+#   - Calculates the required camera movement and sends motor
+#     commands to the Rotator Controller through ROS2 topic messages
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
 
 import rclpy
 import serial
@@ -63,12 +81,12 @@ class CameraControllerNode(Node):
 
             # calculate required motor speed for tracking
             if (abs(self.offset_x) > msg.bbox_width / 2):
-                self.pan_speed_ = (int) (- self.offset_x / 2)
+                self.pan_speed_ = (int) (- self.offset_x / 8)
             else:
                 # face is centered enough in X
                 self.pan_speed_ = 0
 
-            if (abs(self.offset_y) > msg.bbox_height / 2):
+            if (abs(self.offset_y) > msg.bbox_height / 4):
                 self.tilt_speed_ = (int) (- self.offset_y)
             else:
                 # face is centered enough in Y

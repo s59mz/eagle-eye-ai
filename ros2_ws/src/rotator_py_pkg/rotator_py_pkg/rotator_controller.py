@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+#
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+# Rotator Controller
+#   - Controls the Pan-Tilt Camera Rotator via Pelco-D protocol
+#     through serial RS-485 interface by ROS2 topic subscriber
+#   - Reads Inclinometer status and publishes data on ROS2 topic
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
+
 
 import rclpy
 import serial
@@ -10,6 +28,7 @@ from rotator_interfaces.msg import MotorCmd, SwitchCmd
 from eagle_eye_interfaces.msg import CameraOrientation
 
 
+# ROS2 Controller Node
 class RotatorControllerNode(Node):
     def __init__(self):
         super().__init__("rotator_controller")
@@ -33,7 +52,9 @@ class RotatorControllerNode(Node):
         # Initialize Modbus client with pymodbus
         self.modbus_client_ = ModbusClient(method='rtu', port=self.port_, 
                 handle_local_echo=True, baudrate=self.baudrate_, timeout=1)
-        self.modbus_client_.connect()
+
+        if (self.serial_):
+            self.modbus_client_.connect()
 
         # Create subscribers for motor control and switch control topics
         self.sub_motor_control = self.create_subscription(
@@ -131,6 +152,10 @@ class RotatorControllerNode(Node):
             self.serial_.write(self.pelcod_message_)
 
     def callback_inclinometer(self):
+
+        # checknif port is open
+        if not self.serial_:
+            return
 
         # Reset input buffer
         self.serial_.flush()

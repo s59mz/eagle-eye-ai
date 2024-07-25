@@ -1,3 +1,21 @@
+#
+# Eagle-Eye-AI
+# Smart Following Camera with Face Recognition
+#   for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - July 2024
+#
+# Startup script for Xilinx kria-developer image 
+#   - Intended for manually compiling Kria's applications and 
+#     exploring VVAS Header files 
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
+
+
 docker run \
 --rm \
 --net=host \
