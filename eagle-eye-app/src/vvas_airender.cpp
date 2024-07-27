@@ -225,13 +225,10 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
               new_ymax / 2), Scalar (uvScalar), kpriv->line_thickness, 1, 0);
 
 	//
-	// Show Camera Orientation
+	// Show Camera Orientation - place a dynamic text on a screen
 	//
 
-	// place a static text on a screen
-	std::string camera_text = "";
-	    
-	// place a dynamic text on a screen
+	// check if custom data struct exista
 	if (prediction && prediction->reserved_1) {
 	    std::stringstream ss_azimuth, ss_elevation;
 
@@ -244,7 +241,7 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
 		ss_elevation << std::setw(6) << std::setfill(' ') << std::fixed << std::setprecision(2) << cam_orient->elevation;
 
 		// Combine the formatted strings into a single text
-		camera_text = "Face Tracking: AZ:" + ss_azimuth.str() + ", EL:" + ss_elevation.str();
+		std::string camera_text = "Face Tracking: AZ:" + ss_azimuth.str() + ", EL:" + ss_elevation.str();
 
 		// Calculate text size
 		int baseLine;
