@@ -20,7 +20,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     
     * You should use a RTSP webcam as an input device.
     
-      The RTSP webcam is mandatory video input device supported in the application. The supported resolution is: **1920x1080**.
+      The application requires an RTSP webcam as the mandatory video input device. The recommended and tested resolution is **1920x1080**.
 
       Recommended webcam is the [SIMICAM 4k Video Cam](https://a.aliexpress.com/_EznpRub).
 
