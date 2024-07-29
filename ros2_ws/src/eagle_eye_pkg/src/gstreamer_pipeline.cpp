@@ -58,7 +58,7 @@ public:
         // Build the pipeline string
 	std::string pipeline_str = "rtspsrc location=" + camera_url_ + " ! "
                                    "rtph265depay ! h265parse ! omxh265dec ! queue ! videoconvert ! videorate ! "
-                                   "video/x-raw, width=1920, height=1080, format=NV12, framerate=30/1 ! tee name=t ! queue ! "
+                                   "video/x-raw, format=NV12, framerate=30/1 ! tee name=t ! queue ! "
                                    "vvas_xmultisrc kconfig=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/preprocess.json\" ! queue ! "
                                    "vvas_xfilter kernels-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/aiinference.json\" ! "
                                    "ima.sink_master vvas_xmetaaffixer name=ima ima.src_master ! fakesink "

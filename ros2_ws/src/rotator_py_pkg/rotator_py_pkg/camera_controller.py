@@ -81,7 +81,7 @@ class CameraControllerNode(Node):
 
             # calculate required motor speed for tracking
             if (abs(self.offset_x) > msg.bbox_width / 2):
-                self.pan_speed_ = (int) (- self.offset_x / 8)
+                self.pan_speed_ = (int) (- self.offset_x * 240 / msg.frame_width)
             else:
                 # face is centered enough in X
                 self.pan_speed_ = 0

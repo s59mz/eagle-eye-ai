@@ -243,13 +243,19 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
 		// Combine the formatted strings into a single text
 		std::string camera_text = "Face Tracking: AZ:" + ss_azimuth.str() + ", EL:" + ss_elevation.str();
 
-		// Calculate text size
-		int baseLine;
-		Size text_size = getTextSize(camera_text, kpriv->font, kpriv->font_size, kpriv->line_thickness, &baseLine);
-
 		// Get frame dimensions from properties
 		int frame_width = frameinfo->inframe->props.width;
 		int frame_height = frameinfo->inframe->props.height;
+
+		// Calculate text size
+		int baseLine;
+		int font_size = (int) kpriv->font_size;
+
+		if (frame_width < 1920) {
+		    font_size /= 2;
+		}
+
+		Size text_size = getTextSize(camera_text, kpriv->font, font_size, kpriv->line_thickness, &baseLine);
 
 		// Text position
 		int x = (frame_width - text_size.width) / 2;
@@ -259,11 +265,11 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
 
 		// Draw text on Y plane
 		putText (frameinfo->lumaImg, camera_text, cv::Point (x, y), kpriv->font, 
-							 kpriv->font_size, Scalar (yScalar), kpriv->line_thickness, 1);
+							 font_size, Scalar (yScalar), kpriv->line_thickness, 1);
 
 		// Draw text on UV plane
 		putText (frameinfo->chromaImg, camera_text, cv::Point (x / 2, y / 2), kpriv->font, 
-							 kpriv->font_size / 2, Scalar (uvScalar), kpriv->line_thickness, 1);
+							 font_size / 2, Scalar (uvScalar), kpriv->line_thickness, 1);
 	   }
       }
 
