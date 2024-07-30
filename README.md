@@ -134,6 +134,6 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
 ## License
 
-This project is licensed under the GNU GENERAL PUBLIC LICENSE Version 3. See the LICENSE file for details.
+This project is licensed under the GPL-3.0. See the LICENSE file for details.
 
 For further information or support, please refer to the project documentation on [Hackster.io](https://www.hackster.io/matjaz4).
