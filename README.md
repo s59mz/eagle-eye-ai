@@ -34,7 +34,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     
       Connect the Ethernet cable to your local network with DHCP enabled.
 
-    * RS-485 Pmod module as camera rotator control 
+    * [RS-485 PMOD module](https://github.com/s59mz/kicad-pmod_rs485) as camera rotator control 
 
       The Camera Rotator should support the Pelco-D protocol for Pan-Tilt through RS-485 interface.
       
