@@ -1,6 +1,6 @@
 # Eagle-Eye-AI
 
-Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driven camera tracking and face detection. The project integrates custom hardware and software, including a PMOD RS-485 module for camera rotator control and ROS2 nodes for real-time processing and communication. Follow our comprehensive guide on [Hackster](https://www.hackster.io/matjaz4) to build, test, and deploy the system, transforming your camera into an intelligent, autonomous tracking device.
+Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driven camera tracking and face detection. The project integrates custom hardware and software, including a PMOD RS-485 module for camera rotator control and ROS2 nodes for real-time processing and communication. Follow our comprehensive guide on [Hackster.io](https://www.hackster.io/matjaz4) to build, test, and deploy the system, transforming your camera into an intelligent, autonomous tracking device.
 
 # Setting up the Board
 
