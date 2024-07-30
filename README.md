@@ -1,10 +1,18 @@
 # Eagle-Eye-AI
 
-Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driven camera tracking and face detection. The project integrates custom hardware and software, including a PMOD RS-485 module for camera rotator control and ROS2 nodes for real-time processing and communication. Follow our comprehensive guide on [Hackster.io](https://www.hackster.io/matjaz4) to build, test, and deploy the system, transforming your camera into an intelligent, autonomous tracking device.
+Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driven camera tracking and face detection. The project integrates custom hardware and software, including a RS-485 PMOD module for camera rotator control and ROS2 nodes for real-time processing and communication. Follow our comprehensive guide on [Hackster.io](https://www.hackster.io/matjaz4) to build, test, and deploy the system, transforming your camera into an intelligent, autonomous tracking device.
 
 ## Requirements
 
-Ensure that your KRIA™ KR260 board has the official Ubuntu image installed and Docker set up. The board should also be prepared for running official demo applications from AMD, such as the Smartcam demo application.
+1. **Kria KR260 Board**: Ensure that your KRIA™ KR260 board has the official Ubuntu image installed and Docker set up. The board should be prepared for running official demo applications from AMD, such as the **Smartcam demo** application.
+
+2. **IP Camera**: You will need an IP camera that supports RTSP streaming with a resolution of 1920x1080. The camera should be connected to the same local network as the Kria board. A recommended camera is the [SIMICAM 4k Video Cam](https://a.aliexpress.com/_EznpRub) or similar.
+
+3. **Pan-Tilt Rotator**: A Pan-Tilt Camera Rotator that supports RS-485 and the Pelco-P/D protocol is required for rotating the camera. A recommended rotator is the [PTZ Rotator](https://a.aliexpress.com/_EvhGQMB).
+
+4. **RS-485 PMOD Module**: Required for camera rotator control. The Camera Rotator should support the Pelco-D protocol for Pan-Tilt through RS-485 interface. The module can be found [here](https://github.com/s59mz/kicad-pmod_rs485).
+
+5. **Network Connection**: Connect the Ethernet cable to your local network with DHCP enabled.
 
 ## Getting the Application Package
 
@@ -26,29 +34,23 @@ Ensure that your KRIA™ KR260 board has the official Ubuntu image installed and
 
 2. Dynamically load the firmware package:
 
-    * Disable the desktop environment:
+    * Switch to the kr260-eagle-eye platform:
 
       ```bash
-      sudo xmutil desktop_disable
+      sudo xmutil unloadapp
+      sudo xmutil loadapp kr260-eagle-eye
       ```
-
-      Enable it again after running the application with:
-
-      ```bash
-      sudo xmutil desktop_enable
-      ```
-
+    
     * Show the list and status of available acceleration platforms:
 
       ```bash
       sudo xmutil listapps
       ```
 
-    * Switch to the kr260-eagle-eye platform:
+3. Disable the desktop environment:
 
       ```bash
-      sudo xmutil unloadapp
-      sudo xmutil loadapp kr260-eagle-eye
+      sudo xmutil desktop_disable
       ```
 
 ## Building the Docker Image
@@ -132,6 +134,6 @@ Ensure that your KRIA™ KR260 board has the official Ubuntu image installed and
 
 ## License
 
-This project is licensed under the [Your License Here]. See the LICENSE file for details.
+This project is licensed under the GNU GENERAL PUBLIC LICENSE Version 3. See the LICENSE file for details.
 
-For further information or support, please refer to the project documentation or contact the repository maintainers.
+For further information or support, please refer to the project documentation on [Hackster.io](https://www.hackster.io/matjaz4).
