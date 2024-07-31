@@ -60,7 +60,7 @@ The Dockerfile is designed to automate the build process for the Eagle-Eye-AI ap
 
 Once built, you can run the Eagle-Eye-AI application within the Docker container on the KRIA board. The application will provide real-time face tracking and display the camera status line as described.
 
-For detailed instructions on running the application, refer to the project documentation published on [Hackster.io](https://www.hackster.io/matjaz4).
+For detailed instructions on running the application, refer to the project documentation published on [Hackster.io](https://www.hackster.io/matjaz4/eagleeye-ai-smart-following-camera-with-face-recognition-1b0f65).
 
 ## Additional Notes
 
