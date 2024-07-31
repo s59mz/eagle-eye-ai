@@ -166,7 +166,7 @@ class RotatorControllerNode(Node):
         result = self.modbus_client_.read_holding_registers(0x3d, 3, slave=80)
 
         if result.isError():
-            self.get_logger().info(f"Modbus Error: Read Holding reg")
+            # self.get_logger().info(f"Modbus Error: Read Holding reg")
             return
 
         value=[0]*3
