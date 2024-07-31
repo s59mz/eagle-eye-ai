@@ -45,9 +45,9 @@ install(TARGETS vvas_airender DESTINATION ${INSTALL_PATH}/lib)
 
 
 install(FILES
-    README
+    README.md
     DESTINATION ${INSTALL_PATH}/
-    RENAME      README_EAGLE_AI
+    RENAME      README_EAGLE_AI.md
     )
 
 install(DIRECTORY
