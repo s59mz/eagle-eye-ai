@@ -563,6 +563,7 @@ proc create_root_design { parentCell } {
    CONFIG.PSU_MIO_21_SLEW {slow} \
    CONFIG.PSU_MIO_22_DIRECTION {inout} \
    CONFIG.PSU_MIO_22_DRIVE_STRENGTH {4} \
+   CONFIG.PSU_MIO_22_INPUT_TYPE {cmos} \
    CONFIG.PSU_MIO_22_POLARITY {Default} \
    CONFIG.PSU_MIO_22_SLEW {slow} \
    CONFIG.PSU_MIO_23_DIRECTION {inout} \
@@ -1379,8 +1380,7 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: axi_uartlite_0, and set properties
   set axi_uartlite_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uartlite:2.0 axi_uartlite_0 ]
   set_property -dict [ list \
-   CONFIG.C_S_AXI_ACLK_FREQ_HZ {90000000} \
-   CONFIG.C_S_AXI_ACLK_FREQ_HZ_d {90} \
+   CONFIG.C_S_AXI_ACLK_FREQ_HZ {99999000} \
  ] $axi_uartlite_0
 
   # Create instance: axi_vip_0, and set properties

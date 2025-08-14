@@ -48,10 +48,10 @@ RUN apt-get update && apt-get install --yes --no-install-recommends \
     ros-dev-tools ;
 
 # Install PySerial
-RUN pip3 install pyserial
+RUN pip3 install pyserial==3.5
 
 # Install PyModbus
-RUN pip3 install pymodbus
+RUN pip3 install pymodbus==3.6.9
 
 # Source the ROS2 setup script
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
