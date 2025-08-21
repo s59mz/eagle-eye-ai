@@ -28,7 +28,7 @@ APP_DOCKERFILE="eagle-eye-docker"
 # Check if ros-image exists
 if ! docker image inspect $ROS_IMAGE > /dev/null 2>&1; then
     echo "$ROS_IMAGE does not exist. Building $ROS_IMAGE..."
-    docker build --build-arg BUILD_DATE="$(date -u +'%Y/%m/%d %H:%M')" -f $ROS_DOCKERFILE . -t $ROS_IMAGE
+    docker build --network host --build-arg BUILD_DATE="$(date -u +'%Y/%m/%d %H:%M')" -f $ROS_DOCKERFILE . -t $ROS_IMAGE
 else
   echo "$ROS_IMAGE already exists."
 fi
@@ -36,7 +36,7 @@ fi
 # Build app-image
 if docker image inspect $ROS_IMAGE > /dev/null 2>&1; then
     echo "Building $APP_IMAGE..."
-    docker build --build-arg BUILD_DATE="$(date -u +'%Y/%m/%d %H:%M')" -f $APP_DOCKERFILE . -t $APP_IMAGE
+    docker build --network host --build-arg BUILD_DATE="$(date -u +'%Y/%m/%d %H:%M')" -f $APP_DOCKERFILE . -t $APP_IMAGE
 else
   echo "ERROR: Can't build the $ROS_IMAGE image"
 fi

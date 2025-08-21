@@ -64,5 +64,7 @@ RUN /bin/bash -c "source /opt/ros/humble/setup.bash && colcon build"
 
 # install application startup script
 ADD scripts/run_eagle_eye_ai.sh .
+ADD scripts/test.sh .
 RUN chmod +x run_eagle_eye_ai.sh
+RUN chmod +x test.sh
 
