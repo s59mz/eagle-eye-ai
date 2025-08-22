@@ -21,7 +21,7 @@
 
 
 ## Building based on kria-developer docker image
-FROM xilinx/kria-developer:2022.1 AS build
+FROM kria-developer:3.5.0 AS build
 
 WORKDIR /workspace
 
@@ -36,7 +36,7 @@ RUN cd eagle-eye-app ;\
 
 
 ## Building based on kria-runtime docker image
-FROM ros2-humble:1.0
+FROM ros2-humble:3.5.0
 
 # Copy from kria-developer builded files
 COPY --from=build /workspace/eagle-eye-app/build/install /

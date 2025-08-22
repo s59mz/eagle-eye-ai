@@ -30,4 +30,4 @@ docker run \
 -v /etc/vart.conf:/etc/vart.conf \
 -v /lib/firmware/xilinx:/lib/firmware/xilinx \
 -v /run:/run \
--it xilinx/kria-developer:2022.1 bash
+-it kria-developer:3.5.0 bash

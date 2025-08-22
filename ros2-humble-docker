@@ -20,7 +20,7 @@
 
 
 ## Building based on kria-runtime docker image
-FROM xilinx/kria-runtime:2022.1
+FROM kria-runtime:3.5.0
 
 # set environment variables
 ENV DEBIAN_FRONTEND=noninteractive

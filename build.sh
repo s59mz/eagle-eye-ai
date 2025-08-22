@@ -18,12 +18,32 @@
 
 
 # Define the names of the images
-ROS_IMAGE="ros2-humble:1.0"
-APP_IMAGE="eagle-eye-ai:1.0"
+KRIA_RUNTIME_IMAGE="kria-runtime:3.5.0"
+KRIA_DEV_IMAGE="kria-developer:3.5.0"
+ROS_IMAGE="ros2-humble:3.5.0"
+APP_IMAGE="eagle-eye-ai:3.5.0"
 
 # Define the names of dockerfiles
+KRIA_RUNTIME_DOCKERFILE="kria-runtime"
+KRIA_DEVELOPER_DOCKERFILE="kria-developer"
 ROS_DOCKERFILE="ros2-humble-docker"
 APP_DOCKERFILE="eagle-eye-docker"
+
+# Check if kria-runtime image exists
+if ! docker image inspect $KRIA_RUNTIME_IMAGE > /dev/null 2>&1; then
+    echo "$KRIA_RUNTIME_IMAGE does not exist. Building $KRIA_RUNTIME_IMAGE..."
+    docker build --network host -f $KRIA_RUNTIME_DOCKERFILE . -t $KRIA_RUNTIME_IMAGE
+else
+  echo "$KRIA_RUNTIME_IMAGE already exists."
+fi
+
+# Check if kria-developer image exists
+if ! docker image inspect $KRIA_DEV_IMAGE > /dev/null 2>&1; then
+    echo "$KRIA_DEV_IMAGE does not exist. Building $KRIA_DEV_IMAGE..."
+    docker build --network host -f $KRIA_DEV_DOCKERFILE . -t $KRIA_DEV_IMAGE
+else
+  echo "$KRIA_DEV_IMAGE already exists."
+fi
 
 # Check if ros-image exists
 if ! docker image inspect $ROS_IMAGE > /dev/null 2>&1; then
