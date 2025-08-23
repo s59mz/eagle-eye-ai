@@ -38,3 +38,7 @@ apt update && apt install --yes --no-install-recommends \
     libgstreamer-plugins-bad1.0-dev \
     libopencv-dev \
     libxilinx-vcu-omx-dev ;  
+
+ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
+ENV PYTHONPATH=/usr/lib/python3.10/site-packages
+
