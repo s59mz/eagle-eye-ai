@@ -25,14 +25,16 @@ APP_IMAGE="eagle-eye-ai:3.5.0"
 
 # Define the names of dockerfiles
 KRIA_RUNTIME_DOCKERFILE="kria-runtime"
-KRIA_DEVELOPER_DOCKERFILE="kria-developer"
+KRIA_DEV_DOCKERFILE="kria-developer"
 ROS_DOCKERFILE="ros2-humble-docker"
 APP_DOCKERFILE="eagle-eye-docker"
 
 # Check if kria-runtime image exists
 if ! docker image inspect $KRIA_RUNTIME_IMAGE > /dev/null 2>&1; then
     echo "$KRIA_RUNTIME_IMAGE does not exist. Building $KRIA_RUNTIME_IMAGE..."
+    cp /usr/lib/aarch64-linux-gnu/libdfx.so.1.0 .
     docker build --network host -f $KRIA_RUNTIME_DOCKERFILE . -t $KRIA_RUNTIME_IMAGE
+    rm libdfx.so.1.0
 else
   echo "$KRIA_RUNTIME_IMAGE already exists."
 fi
@@ -54,15 +56,15 @@ else
 fi
 
 # Build app-image
-if docker image inspect $ROS_IMAGE > /dev/null 2>&1; then
+if ! docker image inspect $APP_IMAGE > /dev/null 2>&1; then
     echo "Building $APP_IMAGE..."
-    docker build --network host --build-arg BUILD_DATE="$(date -u +'%Y/%m/%d %H:%M')" -f $APP_DOCKERFILE . -t $APP_IMAGE
+    #docker build --network host --build-arg BUILD_DATE="$(date -u +'%Y/%m/%d %H:%M')" -f $APP_DOCKERFILE . -t $APP_IMAGE
 else
-  echo "ERROR: Can't build the $ROS_IMAGE image"
+  echo "$APP_IMAGE already exists."
 fi
 
-if ! [ docker image inspect $APP_IMAGE > /dev/null 2>&1 ] && ! [ docker image inspect $ROS_IMAGE > /dev/null 2>&1 ] ; then
-  echo "Both $ROS_IMAGE and $APP_IMAGE are now on Kria board."
+if  [ docker image inspect $APP_IMAGE > /dev/null 2>&1 ] &&  [ docker image inspect $ROS_IMAGE > /dev/null 2>&1 ] ; then
+  echo "The $APP_IMAGE is now on Kria board and ready for use. Type ./run.sh to run it."
 else
   echo "ERROR: Can't build the $APP_IMAGE image"
 fi

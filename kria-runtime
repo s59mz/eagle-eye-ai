@@ -85,3 +85,32 @@ RUN pip3 install jupyterlab;
 
 RUN wget https://raw.githubusercontent.com/Xilinx/meta-petalinux/rel-v2022.1/recipes-utils/start-jupyterlab/start-jupyterlab/overrides.json --no-check-certificate && mkdir -p /usr/local/share/jupyter/lab/settings/;cp overrides.json /usr/local/share/jupyter/lab/settings/overrides.json
 
+# install Vitis-AI 3.5
+
+RUN wget -O vai3.5_kr260.zip https://www.xilinx.com/bin/public/openDownload?filename=vai3.5_kr260.zip
+
+RUN unzip vai3.5_kr260.zip
+
+# Installing VART packages
+RUN dpkg -i --force-overwrite vai3.5_kr260/target/runtime_deb/libunilog*.deb
+RUN dpkg -i --force-overwrite vai3.5_kr260/target/runtime_deb/libxir*.deb
+RUN dpkg -i --force-overwrite vai3.5_kr260/target/runtime_deb/libtarge*.deb
+RUN dpkg -i --force-overwrite vai3.5_kr260/target/runtime_deb/libvart*.deb
+RUN dpkg -i --force-overwrite vai3.5_kr260/target/runtime_deb/libvitis*.deb
+
+# Copy libraries
+RUN tar -xzf vai3.5_kr260/target/lack_lib.tar.gz -C vai3.5_kr260/target/
+RUN cp vai3.5_kr260/target/lack_lib/* /usr/lib
+
+RUN cp vai3.5_kr260/xbutil_tool/xbutil2 /usr/bin/xbutil
+RUN chmod +x /usr/bin/xbutil
+
+RUN rm -rf vai3.5_kr260*
+
+COPY libdfx.so.1.0 /usr/lib
+
+RUN pip install numpy
+
+ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
+ENV PYTHONPATH=/usr/lib/python3.10/site-packages
+
