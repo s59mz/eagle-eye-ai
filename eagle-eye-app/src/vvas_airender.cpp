@@ -32,10 +32,6 @@
 #include <chrono>
 #include <iomanip>
 
-extern "C" {
-#include <vvas_utils/vvas_node.h>
-}
-
 #include "vvas_airender.hpp"
 
 int log_level = LOG_LEVEL_WARNING;
@@ -198,7 +194,7 @@ overlay_node_foreach (const VvasTreeNode * node, void * kpriv_ptr)
         }
       }
     }
-#if 0
+
     LOG_MESSAGE (LOG_LEVEL_INFO,
         "RESULT: (prediction node %ld) %s(%d) %d %d %d %d (%f)",
         prediction->prediction_id,
@@ -207,7 +203,7 @@ overlay_node_foreach (const VvasTreeNode * node, void * kpriv_ptr)
         prediction->bbox.width + prediction->bbox.x,
         prediction->bbox.height + prediction->bbox.y,
         classification->class_prob);
-#endif
+
     /* Check whether the frame is NV12 or BGR and act accordingly */
     if (frameinfo->inframe->props.fmt == VVAS_VFMT_Y_UV8_420) {
       LOG_MESSAGE (LOG_LEVEL_DEBUG, "Drawing rectangle for NV12 image");
@@ -230,11 +226,11 @@ overlay_node_foreach (const VvasTreeNode * node, void * kpriv_ptr)
         rectangle (frameinfo->chromaImg, Point (new_xmin / 2,
               new_ymin / 2), Point (new_xmax / 2,
               new_ymax / 2), Scalar (uvScalar), kpriv->line_thickness, 1, 0);
-
+#if 0
 	//
 	// Show Camera Orientation - place a dynamic text on a screen
 	//
-#if 0
+	
 	// check if custom data struct exista
 	if (prediction && prediction->reserved_1) {
 	    std::stringstream ss_azimuth, ss_elevation;
@@ -278,6 +274,8 @@ overlay_node_foreach (const VvasTreeNode * node, void * kpriv_ptr)
 		putText (frameinfo->chromaImg, camera_text, cv::Point (x / 2, y / 2), kpriv->font, 
 							 font_size / 2, Scalar (uvScalar), kpriv->line_thickness, 1);
 	   }
+#endif
+
       }
 
       if (label_present) {
@@ -325,11 +323,9 @@ overlay_node_foreach (const VvasTreeNode * node, void * kpriv_ptr)
                 prediction->bbox.y + frameinfo->y_offset), kpriv->font,
             kpriv->font_size, Scalar (kpriv->label_color.blue,
                 kpriv->label_color.green, kpriv->label_color.red), 1, 1);
-#endif
       }
     }
   }
-
 
   return FALSE;
 }
