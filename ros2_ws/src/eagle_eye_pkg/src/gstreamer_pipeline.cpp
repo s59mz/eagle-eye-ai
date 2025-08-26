@@ -23,6 +23,9 @@
 */
 
 
+#define VVAS_GLIB_UTILS 1
+#include <glib.h>
+
 #include <gst/gst.h>
 #include <rclcpp/rclcpp.hpp>
 #include "eagle_eye_interfaces/msg/face_detect.hpp"
@@ -153,7 +156,7 @@ public:
         if (!cam_orient) {
             cam_orient = new CameraOrientation();
 	}
-		 
+#if 0 
 	// Get Inference Metadata
         GstInferenceMeta *inference_meta = reinterpret_cast<GstInferenceMeta *>(meta);
 
@@ -206,6 +209,7 @@ public:
                 }
             }
         }
+#endif
 
 	// no faces detected, but we count empty frames for timeout too
         gsnode->publish_max_bounding_box(nullptr, nullptr);
