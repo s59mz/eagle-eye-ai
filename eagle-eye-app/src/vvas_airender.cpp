@@ -32,6 +32,10 @@
 #include <chrono>
 #include <iomanip>
 
+extern "C" {
+#include <vvas_utils/vvas_node.h>
+}
+
 #include "vvas_airender.hpp"
 
 int log_level = LOG_LEVEL_WARNING;
@@ -124,7 +128,7 @@ convert_rgb_to_yuv_clrs (color clr, unsigned char *y, unsigned short *uv)
 
 /* Compose label text based on config json */
 bool
-get_label_text (GstInferenceClassification * c, vvas_xoverlaypriv * kpriv,
+get_label_text (VvasInferClassification * c, vvas_xoverlaypriv * kpriv,
     char *label_string)
 {
   unsigned char idx = 0, buffIdx = 0;
@@ -143,21 +147,21 @@ get_label_text (GstInferenceClassification * c, vvas_xoverlaypriv * kpriv,
   return true;
 }
 
-static gboolean
-overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
+static bool
+overlay_node_foreach (const VvasTreeNode * node, void * kpriv_ptr)
 {
   vvas_xoverlaypriv *kpriv = (vvas_xoverlaypriv *) kpriv_ptr;
   struct overlayframe_info *frameinfo = &(kpriv->frameinfo);
   LOG_MESSAGE (LOG_LEVEL_DEBUG, "enter");
 
-  GList *classes;
-  GstInferenceClassification *classification;
-  GstInferencePrediction *prediction = (GstInferencePrediction *) node->data;
+  VvasList *classes;
+  VvasInferClassification *classification;
+  VvasInferPrediction *prediction = (VvasInferPrediction *) node->data;
 
   /* On each children, iterate through the different associated classes */
   for (classes = prediction->classifications;
-      classes; classes = g_list_next (classes)) {
-    classification = (GstInferenceClassification *) classes->data;
+      classes; classes = classes->next) {
+    classification = (VvasInferClassification *) classes->data;
 
     int idx = vvas_classification_is_allowed ((char *)
         classification->class_label, kpriv);
@@ -600,13 +604,21 @@ extern "C"
 
 
     if (infer_meta != NULL) {
-    /* Print the entire prediction tree */
-    pstr = gst_inference_prediction_to_string (infer_meta->prediction);
-    LOG_MESSAGE (LOG_LEVEL_DEBUG, "Prediction tree: \n%s", pstr);
-    free (pstr);
+	    /* Print the entire prediction tree */
+	    pstr = gst_inference_prediction_to_string(infer_meta->prediction);
+	    if (pstr) {
+		LOG_MESSAGE(LOG_LEVEL_DEBUG, "Prediction tree:\n%s", pstr);
+		free(pstr);
+	    }
 
-    g_node_traverse (infer_meta->prediction->predictions, G_PRE_ORDER,
-        G_TRAVERSE_ALL, -1, overlay_node_foreach, kpriv);
+	    vvas_treenode_traverse(
+		infer_meta->prediction->prediction.node,   // VvasTreeNode*
+		PRE_ORDER,                                 // like G_PRE_ORDER
+		TRAVERSE_ALL,                              // all nodes to be traversed flag
+		-1,                                        // unlimited depth
+		overlay_node_foreach,                      // our VVAS callback
+		(void *) kpriv                                      // user data
+	    );
     }
 
     fps_overlay(kpriv);

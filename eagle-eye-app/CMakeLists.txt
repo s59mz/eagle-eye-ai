@@ -26,23 +26,32 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++14")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 find_package(GStreamer REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(PkgConfig REQUIRED)
 
 SET(INSTALL_PATH "opt/xilinx/kr260-eagle-eye")
+
+pkg_check_modules(VVAS_UTILS REQUIRED IMPORTED_TARGET vvas-utils)
 
 add_library(vvas_xpp SHARED src/vvas_xpp_pipeline.c)
 target_include_directories(vvas_xpp PRIVATE ${GSTREAMER_INCLUDE_DIRS})
 target_link_libraries(vvas_xpp
-  jansson vvasutil-3.0 gstvvasinfermeta-3.0)
+  jansson gstvvasinfermeta-3.0)
 install(TARGETS vvas_xpp DESTINATION ${INSTALL_PATH}/lib)
 
 add_library(vvas_airender SHARED src/vvas_airender.cpp)
-target_include_directories(vvas_airender PRIVATE ${GSTREAMER_INCLUDE_DIRS})
-target_link_libraries(vvas_airender 
-    jansson vvasutil-3.0 gstvvasinfermeta-3.0 
-    gstreamer-1.0 gstbase-1.0 glib-2.0
-    opencv_core opencv_video opencv_videoio opencv_imgproc)
+target_include_directories(vvas_airender PRIVATE
+  ${GSTREAMER_INCLUDE_DIRS}
+  ${VVAS_UTILS_INCLUDE_DIRS}          # <- headers like <vvas_utils/vvas_node.h>
+)
+target_link_libraries(vvas_airender PRIVATE
+  PkgConfig::VVAS_UTILS          # <-- gives -lvvasutil-3.0 -lxrt_core ...
+  vvascore_utils-1.0
+  gstvvasinfermeta-3.0
+  gstreamer-1.0 gstbase-1.0 glib-2.0
+  jansson
+  opencv_core opencv_video opencv_videoio opencv_imgproc
+)
 install(TARGETS vvas_airender DESTINATION ${INSTALL_PATH}/lib)
-
 
 install(FILES
     README.md

@@ -30,4 +30,5 @@ docker run \
 -v /etc/vart.conf:/etc/vart.conf \
 -v /lib/firmware/xilinx:/lib/firmware/xilinx \
 -v /run:/run \
--it kria-developer:3.5.0 bash
+-v ./eagle-eye-app:/eagle-eye-app \
+-it kria-developer:vvas bash
