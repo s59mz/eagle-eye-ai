@@ -58,7 +58,7 @@ fi
 # Build app-image
 if ! docker image inspect $APP_IMAGE > /dev/null 2>&1; then
     echo "Building $APP_IMAGE..."
-    #docker build --network host --build-arg BUILD_DATE="$(date -u +'%Y/%m/%d %H:%M')" -f $APP_DOCKERFILE . -t $APP_IMAGE
+    docker build --network host --build-arg BUILD_DATE="$(date -u +'%Y/%m/%d %H:%M')" -f $APP_DOCKERFILE . -t $APP_IMAGE
 else
   echo "$APP_IMAGE already exists."
 fi

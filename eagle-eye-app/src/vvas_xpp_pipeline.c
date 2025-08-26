@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#define VVAS_GLIB_UTILS 1
+#include <glib.h>
+
 #include <vvas/vvas_kernel.h>
 #include <stdio.h>
 #include <unistd.h>

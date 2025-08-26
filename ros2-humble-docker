@@ -20,7 +20,8 @@
 
 
 ## Building based on kria-runtime docker image
-FROM kria-runtime:3.5.0
+#FROM kria-runtime:3.5.0
+FROM kria-developer:vvas
 
 # set environment variables
 ENV DEBIAN_FRONTEND=noninteractive

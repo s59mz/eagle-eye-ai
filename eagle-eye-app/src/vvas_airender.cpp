@@ -17,6 +17,9 @@
  * 	Added: camera orientation status text when detected face
  */
 
+#define VVAS_GLIB_UTILS 1
+#include <glib.h>
+
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -191,7 +194,7 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
         }
       }
     }
-
+#if 0
     LOG_MESSAGE (LOG_LEVEL_INFO,
         "RESULT: (prediction node %ld) %s(%d) %d %d %d %d (%f)",
         prediction->prediction_id,
@@ -200,7 +203,7 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
         prediction->bbox.width + prediction->bbox.x,
         prediction->bbox.height + prediction->bbox.y,
         classification->class_prob);
-
+#endif
     /* Check whether the frame is NV12 or BGR and act accordingly */
     if (frameinfo->inframe->props.fmt == VVAS_VFMT_Y_UV8_420) {
       LOG_MESSAGE (LOG_LEVEL_DEBUG, "Drawing rectangle for NV12 image");
@@ -227,7 +230,7 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
 	//
 	// Show Camera Orientation - place a dynamic text on a screen
 	//
-
+#if 0
 	// check if custom data struct exista
 	if (prediction && prediction->reserved_1) {
 	    std::stringstream ss_azimuth, ss_elevation;
@@ -318,10 +321,10 @@ overlay_node_foreach (GNode * node, gpointer kpriv_ptr)
                 prediction->bbox.y + frameinfo->y_offset), kpriv->font,
             kpriv->font_size, Scalar (kpriv->label_color.blue,
                 kpriv->label_color.green, kpriv->label_color.red), 1, 1);
+#endif
       }
     }
   }
-
 
 
   return FALSE;
