@@ -17,38 +17,25 @@
 #define VVAS_GLIB_UTILS 1
 #include <glib.h>
 
+#include <vvas_core/vvas_memory.h>
+#include <vvas_core/vvas_video.h>
 #include <vvas/vvas_kernel.h>
+
+extern uint64_t vvas_memory_get_paddr(VvasMemory* vvas_mem);
+
+uint32_t xlnx_kernel_init(VVASKernel *handle);
+uint32_t xlnx_kernel_start(VVASKernel *handle, int start,
+                           VVASFrame *in[MAX_NUM_OBJECT], VVASFrame *out[MAX_NUM_OBJECT]);
+uint32_t xlnx_kernel_deinit(VVASKernel *handle);
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 
-enum
-{
-  LOG_LEVEL_ERROR,
-  LOG_LEVEL_WARNING,
-  LOG_LEVEL_INFO,
-  LOG_LEVEL_DEBUG
-};
-
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#define LOG_MESSAGE(level, ...) {\
-  do {\
-    char *str; \
-    if (level == LOG_LEVEL_ERROR)\
-      str = (char*)"ERROR";\
-    else if (level == LOG_LEVEL_WARNING)\
-      str = (char*)"WARNING";\
-    else if (level == LOG_LEVEL_INFO)\
-      str = (char*)"INFO";\
-    else if (level == LOG_LEVEL_DEBUG)\
-      str = (char*)"DEBUG";\
-    if (level <= kernel_priv->log_level) {\
-      printf("[%s %s:%d] %s: ",__FILENAME__, __func__, __LINE__, str);\
-      printf(__VA_ARGS__);\
-      printf("\n");\
-    }\
-  } while (0); \
-}
+
+#include <vvas_core/vvas_log.h>
+static int log_level = LOG_LEVEL_WARNING;
 
 typedef struct _kern_priv
 {
@@ -62,27 +49,23 @@ typedef struct _kern_priv
     int log_level;
 } ResizeKernelPriv;
 
-int32_t
-xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NUM_OBJECT], VVASFrame *output[MAX_NUM_OBJECT]);
-int32_t xlnx_kernel_done(VVASKernel *handle);
-int32_t xlnx_kernel_init(VVASKernel *handle);
-uint32_t xlnx_kernel_deinit(VVASKernel *handle);
 
 uint32_t xlnx_kernel_deinit(VVASKernel *handle)
 {
     ResizeKernelPriv *kernel_priv;
     kernel_priv = (ResizeKernelPriv *)handle->kernel_priv;
-    vvas_free_buffer (handle, kernel_priv->params);
+    vvas_memory_free(kernel_priv->params);
+    kernel_priv->params = NULL;
     free(kernel_priv);
     return 0;
 }
 
-int32_t xlnx_kernel_init(VVASKernel *handle)
+uint32_t xlnx_kernel_init(VVASKernel *handle)
 {
     json_t *jconfig = handle->kernel_config;
     json_t *val; /* kernel config from app */
     ResizeKernelPriv *kernel_priv;
-    float *pPtr; 
+    float *pPtr;
 
     handle->is_multiprocess = 0;
     kernel_priv = (ResizeKernelPriv *)calloc(1, sizeof(ResizeKernelPriv));
@@ -143,9 +126,8 @@ int32_t xlnx_kernel_init(VVASKernel *handle)
     else
         kernel_priv->log_level = json_integer_value (val);
 
-
-
     kernel_priv->params = vvas_alloc_buffer (handle, 6*(sizeof(float)), VVAS_INTERNAL_MEMORY, DEFAULT_MEM_BANK, NULL);
+
     pPtr = kernel_priv->params->vaddr[0];
     pPtr[0] = (float)kernel_priv->mean_r;  
     pPtr[1] = (float)kernel_priv->mean_g;  
@@ -159,7 +141,7 @@ int32_t xlnx_kernel_init(VVASKernel *handle)
     return 0;
 }
 
-int32_t xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NUM_OBJECT], VVASFrame *output[MAX_NUM_OBJECT])
+uint32_t xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NUM_OBJECT], VVASFrame *output[MAX_NUM_OBJECT])
 {
     ResizeKernelPriv *kernel_priv;
     kernel_priv = (ResizeKernelPriv *)handle->kernel_priv;
@@ -177,21 +159,21 @@ int32_t xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NU
         (output[0]->props.width)
         );
     if (ret < 0) {
-      LOG_MESSAGE (LOG_LEVEL_ERROR, "Preprocess: failed to issue execute command");
+      LOG_MESSAGE (LOG_LEVEL_ERROR, log_level, "Preprocess: failed to issue execute command");
       return ret;
     }
 
     /* wait for kernel completion */
     ret = vvas_kernel_done (handle, 1000);
     if (ret < 0) {
-      LOG_MESSAGE (LOG_LEVEL_ERROR, "Preprocess: failed to receive response from kernel");
+      LOG_MESSAGE (LOG_LEVEL_ERROR, log_level, "Preprocess: failed to receive response from kernel");
       return ret;
     }
 
     return 0;
 }
 
-int32_t xlnx_kernel_done(VVASKernel *handle)
+uint32_t xlnx_kernel_done(VVASKernel *handle)
 {
     return 0;
 }

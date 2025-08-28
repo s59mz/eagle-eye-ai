@@ -20,6 +20,14 @@
 #define VVAS_GLIB_UTILS 1
 #include <glib.h>
 
+extern "C" {
+  #include <vvas/vvas_kernel.h>
+  uint32_t xlnx_kernel_init(VVASKernel *handle);
+  uint32_t xlnx_kernel_start(VVASKernel *handle, int start,
+                             VVASFrame *in[MAX_NUM_OBJECT], VVASFrame *out[MAX_NUM_OBJECT]);
+  uint32_t xlnx_kernel_deinit(VVASKernel *handle);
+}
+
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -27,7 +35,6 @@
 #include <iostream>
 #include <sstream>
 #include <math.h>
-#include <vvas/vvas_kernel.h>
 #include <gst/vvas/gstinferencemeta.h>
 #include <chrono>
 #include <iomanip>
@@ -394,7 +401,7 @@ fps_overlay(gpointer kpriv_ptr)
 
 extern "C"
 {
-  int32_t xlnx_kernel_init (VVASKernel * handle)
+  uint32_t xlnx_kernel_init (VVASKernel * handle)
   {
     LOG_MESSAGE (LOG_LEVEL_DEBUG, "enter");
 
@@ -622,7 +629,7 @@ extern "C"
   }
 
 
-  int32_t xlnx_kernel_done (VVASKernel * handle)
+  uint32_t xlnx_kernel_done (VVASKernel * handle)
   {
     LOG_MESSAGE (LOG_LEVEL_DEBUG, "enter");
     return 0;

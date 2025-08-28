@@ -2,18 +2,16 @@
   "xclbin-location":"/lib/firmware/xilinx/kr260-eagle-eye/kr260-eagle-eye.xclbin",
   "vvas-library-repo": "/usr/lib/aarch64-linux-gnu/",
   "element-mode":"inplace",
-  "kernels" :[
-    {
-      "library-name":"libvvas_xdpuinfer.so",
-      "config": {
-	"model-name" : "densebox_640_360",
-	"model-class" : "FACEDETECT",
-	"model-path" : "/opt/xilinx/kr260-eagle-eye/share/vitis_ai_library/models/",
-	"run_time_model" : false,
-	"need_preprocess" : false,
-	"performance_test" : false,
-	"debug_level" : 0
-      }
+  "kernel": {
+    "library-name":"libvvas_xdpuinfer.so",
+    "config": {
+      "model-name" : "densebox_640_360",
+      "model-class" : "FACEDETECT",
+      "model-path" : "/opt/xilinx/kr260-eagle-eye/share/vitis_ai_library/models/",
+      "run_time_model" : false,
+      "need_preprocess" : false,
+      "performance_test" : false,
+      "debug_level" : 0
     }
-  ]
+  }
 }
