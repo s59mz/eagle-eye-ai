@@ -45,20 +45,31 @@ typedef struct _kern_priv
     float scale_r;
     float scale_g;
     float scale_b;
-    VVASFrame *params;
+    VvasContext *vctx;
+    VvasMemory *params;
     int log_level;
 } ResizeKernelPriv;
 
 
 uint32_t xlnx_kernel_deinit(VVASKernel *handle)
 {
-    ResizeKernelPriv *kernel_priv;
-    kernel_priv = (ResizeKernelPriv *)handle->kernel_priv;
-    vvas_memory_free(kernel_priv->params);
-    kernel_priv->params = NULL;
-    free(kernel_priv);
-    return 0;
+  ResizeKernelPriv *kp = (ResizeKernelPriv*)handle->kernel_priv;
+  if (kp) {
+    if (kp->params) vvas_memory_free(kp->params);
+    if (kp->vctx)   vvas_context_destroy(kp->vctx);
+    free(kp);
+  }
+  return 0;
 }
+
+
+#define CK(cond, fmt, ...) do { \
+  if (!(cond)) { \
+    LOG_MESSAGE(LOG_LEVEL_ERROR, kp ? kp->log_level : LOG_LEVEL_ERROR, \
+                "CK FAIL: " fmt, ##__VA_ARGS__); \
+    return 1; \
+  } \
+} while (0)
 
 uint32_t xlnx_kernel_init(VVASKernel *handle)
 {
@@ -126,51 +137,124 @@ uint32_t xlnx_kernel_init(VVASKernel *handle)
     else
         kernel_priv->log_level = json_integer_value (val);
 
-    kernel_priv->params = vvas_alloc_buffer (handle, 6*(sizeof(float)), VVAS_INTERNAL_MEMORY, DEFAULT_MEM_BANK, NULL);
 
-    pPtr = kernel_priv->params->vaddr[0];
-    pPtr[0] = (float)kernel_priv->mean_r;  
-    pPtr[1] = (float)kernel_priv->mean_g;  
-    pPtr[2] = (float)kernel_priv->mean_b;  
-    pPtr[3] = (float)kernel_priv->scale_r;  
-    pPtr[4] = (float)kernel_priv->scale_g;  
-    pPtr[5] = (float)kernel_priv->scale_b;  
+  ResizeKernelPriv *kp = (ResizeKernelPriv *)calloc(1, sizeof(*kp));
+  if (!kp) return 1;
 
-    handle->kernel_priv = (void *)kernel_priv;
+  // defaults (your JSON parsing can override these)
+  kp->log_level = LOG_LEVEL_INFO;
 
-    return 0;
+  VvasReturnType vret = VVAS_RET_SUCCESS;
+  kp->vctx = vvas_context_create(/*dev_idx*/0, /*xclbin_loc*/NULL,
+                                 (VvasLogLevel)kp->log_level, &vret);
+  if (!kp->vctx || vret != VVAS_RET_SUCCESS) {
+    LOG_MESSAGE(LOG_LEVEL_ERROR, kp->log_level, "vvas_context_create failed rc=%d", vret);
+    free(kp);
+    return 1;
+  }
+
+  // allocate params buffer for 6 floats
+  const size_t psize = 6 * sizeof(float);
+  VvasReturnType r = VVAS_RET_SUCCESS;
+  kp->params = vvas_memory_alloc(kp->vctx,
+                                 VVAS_INTERNAL_MEMORY,     // host-visible, device-accessible
+                                 VVAS_ALLOC_FLAG_NONE,     // no special flags
+                                 0,                        // default bank
+                                 psize,
+                                 &r);
+  if (!kp->params || r != VVAS_RET_SUCCESS) {
+    LOG_MESSAGE(LOG_LEVEL_ERROR, kp->log_level,
+                "vvas_memory_alloc failed: r=%d ptr=%p", r, (void*)kp->params);
+    free(kp);
+    return 1;
+  }
+
+  // map & write the 6 floats
+  VvasMemoryMapInfo mi = {0};
+  r = vvas_memory_map(kp->params, VVAS_DATA_MAP_WRITE, &mi);
+  if (r != VVAS_RET_SUCCESS) {
+    LOG_MESSAGE(LOG_LEVEL_ERROR, kp->log_level, "vvas_memory_map failed: r=%d", r);
+    vvas_memory_free(kp->params);
+    free(kp);
+    return 1;
+  }
+
+  if (mi.size < psize) {
+    LOG_MESSAGE(LOG_LEVEL_ERROR, kp->log_level,
+                "params buffer too small: have %zu need %zu", mi.size, psize);
+    vvas_memory_unmap(kp->params, &mi);
+    vvas_memory_free(kp->params);
+    free(kp);
+    return 1;
+  }
+
+  float *p = (float*)mi.data;
+  p[0] = kp->mean_r;
+  p[1] = kp->mean_g;
+  p[2] = kp->mean_b;
+  p[3] = kp->scale_r;
+  p[4] = kp->scale_g;
+  p[5] = kp->scale_b;
+
+  vvas_memory_unmap(kp->params, &mi);
+
+  // (optional) fetch device address of params if available in your headers
+  // NOTE: this may be declared in a private header; if you can't include it,
+  // skip printing it.
+  #ifdef HAVE_VVAS_MEMORY_GET_PADDR
+  uint64_t paddr = vvas_memory_get_paddr(kp->params);
+  LOG_MESSAGE(LOG_LEVEL_INFO, kp->log_level, "params dev paddr=0x%lx (size=%zu)", paddr, psize);
+  #endif
+
+  handle->kernel_priv = kp;
+  return 0;
 }
 
 uint32_t xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NUM_OBJECT], VVASFrame *output[MAX_NUM_OBJECT])
 {
-    ResizeKernelPriv *kernel_priv;
-    kernel_priv = (ResizeKernelPriv *)handle->kernel_priv;
+  ResizeKernelPriv *kp = (ResizeKernelPriv *)handle->kernel_priv;
+  CK(kp, "kernel_priv NULL");
+  CK(input && input[0], "input[0] NULL");
+  CK(output && output[0], "output[0] NULL");
+  CK(input[0]->n_planes >= 2,  "input n_planes=%u < 2",  input[0]->n_planes);
+  CK(output[0]->n_planes >= 1, "output n_planes=%u < 1", output[0]->n_planes);
 
-    int ret = vvas_kernel_start (handle, "ppppuuuuuu", 
-        (input[0]->paddr[0]),
-        (input[0]->paddr[1]),
-        (output[0]->paddr[0]),
-        (kernel_priv->params->paddr[0]),
-        (input[0]->props.width),
-        (input[0]->props.height),
-        (input[0]->props.stride),
-        (output[0]->props.width),
-        (output[0]->props.height),
-        (output[0]->props.width)
-        );
-    if (ret < 0) {
-      LOG_MESSAGE (LOG_LEVEL_ERROR, log_level, "Preprocess: failed to issue execute command");
-      return ret;
-    }
+  CK(input[0]->paddr[0],  "input Y paddr is 0");
+  CK(input[0]->paddr[1],  "input UV paddr is 0");
+  CK(output[0]->paddr[0], "output base paddr is 0");
+  CK(input[0]->props.stride  > 0, "input stride=0");
+  CK(output[0]->props.stride > 0, "output stride=0");
 
-    /* wait for kernel completion */
-    ret = vvas_kernel_done (handle, 1000);
-    if (ret < 0) {
-      LOG_MESSAGE (LOG_LEVEL_ERROR, log_level, "Preprocess: failed to receive response from kernel");
-      return ret;
-    }
+  // device address for params (use the API you actually have; if not available,
+  // ensure your alloc type yields a device address via the framework)
+  uint64_t params_paddr = 0;
+  #ifdef HAVE_VVAS_MEMORY_GET_PADDR
+  params_paddr = vvas_memory_get_paddr(kp->params);
+  #endif
+  CK(params_paddr != 0, "params paddr is 0");
 
-    return 0;
+  LOG_MESSAGE(LOG_LEVEL_INFO, kp->log_level,
+    "pp args: inY=0x%lx inUV=0x%lx out=0x%lx params=0x%lx "
+    "in[%ux%u s=%u] out[%ux%u s=%u]",
+    input[0]->paddr[0], input[0]->paddr[1], output[0]->paddr[0], params_paddr,
+    input[0]->props.width,  input[0]->props.height,  input[0]->props.stride,
+    output[0]->props.width, output[0]->props.height, output[0]->props.stride);
+
+  int ret = vvas_kernel_start(handle, "ppppuuuuuu",
+                              input[0]->paddr[0],     // img_inp_y
+                              input[0]->paddr[1],     // img_inp_uv
+                              output[0]->paddr[0],    // img_out (base)
+                              params_paddr,           // params
+                              input[0]->props.width,
+                              input[0]->props.height,
+                              input[0]->props.stride,
+                              output[0]->props.width,
+                              output[0]->props.height,
+                              output[0]->props.stride);
+  if (ret < 0) {
+    LOG_MESSAGE(LOG_LEVEL_ERROR, kp->log_level, "vvas_kernel_start failed: %d", ret);
+  }
+  return ret;
 }
 
 uint32_t xlnx_kernel_done(VVASKernel *handle)

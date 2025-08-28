@@ -1,18 +1,21 @@
 {
-  "xclbin-location":"/lib/firmware/xilinx/kr260-eagle-eye/kr260-eagle-eye.xclbin",
+  "xclbin-location": "/lib/firmware/xilinx/kr260-eagle-eye/kr260-eagle-eye.xclbin",
   "vvas-library-repo": "/opt/xilinx/kr260-eagle-eye/lib",
   "element-mode": "transform",
   "kernel": {
     "kernel-name": "pp_pipeline_accel:{pp_pipeline_accel_1}",
     "library-name": "libvvas_xpp.so",
     "config": {
-      "debug_level" : 1,
-      "mean_r": 128,
-      "mean_g": 128,
-      "mean_b": 128,
-      "scale_r": 1,
-      "scale_g": 1,
-      "scale_b": 1
+      "debug_level": 3,
+
+      "dev-alloc-input": true,
+      "dev-alloc-output": true,
+      "dev-alloc-stride-align": 256,
+      "in-mem-bank": 0,
+      "out-mem-bank": 0,
+
+      "mean_r": 128, "mean_g": 128, "mean_b": 128,
+      "scale_r": 1,  "scale_g": 1,  "scale_b": 1
     }
   }
 }
