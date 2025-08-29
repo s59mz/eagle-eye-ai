@@ -212,9 +212,16 @@ uint32_t xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_N
         (output[0]->props.stride)
         );
     if (ret < 0) {
-      LOG_MESSAGE (LOG_LEVEL_ERROR, log_level, "Preprocess: failed to issue execute command");
+      printf("Preprocess: failed to issue execute command");
       return ret;
     }
+
+    /* wait for kernel completion */
+    ret = vvas_kernel_done (handle, 1000);
+    if (ret < 0) {
+      printf("Error: Preprocess: failed to receive response from kernel");
+      return ret;
+    } 
 
     return ret;
 }

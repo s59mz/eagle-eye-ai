@@ -52,7 +52,7 @@ RUN git clone --branch VVAS_REL_v3.0 --recurse-submodules https://github.com/Xil
 RUN mkdir -p /usr/include/xrt
 
 # C API headers (contain xrt/xrt.h)
-RUN cp -r /XRT/src/runtime_src/core/include/* /usr/include/xrt/
+#RUN cp -r /XRT/src/runtime_src/core/include/* /usr/include/xrt/
 RUN cp -r /XRT/src/runtime_src/core/include/* /usr/include/
 RUN cp -r /XRT/src/include/1_2/CL/* /usr/include/xrt/
 
