@@ -29,4 +29,4 @@ docker run \
 -v /etc/vart.conf:/etc/vart.conf \
 -v /lib/firmware/xilinx:/lib/firmware/xilinx \
 -v /run:/run \
--it eagle-eye-ai:vvas bash
+-it eagle-eye-ai:opencv bash

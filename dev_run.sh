@@ -31,4 +31,4 @@ docker run \
 -v /lib/firmware/xilinx:/lib/firmware/xilinx \
 -v /run:/run \
 -v ./eagle-eye-app:/eagle-eye-app \
--it kria-developer:vvas bash
+-it kria-developer:opencv bash

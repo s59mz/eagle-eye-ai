@@ -76,6 +76,40 @@ Libs: -L${libdir} -lxrt_core -lxrt_coreutil -lxrt++
 Cflags: -I${includedir}
 EOF
 
+LIBDIR=/usr/lib/aarch64-linux-gnu
+INCLUDEDIR=/usr/include
+install -d $LIBDIR/pkgconfig
+
+cat > $LIBDIR/pkgconfig/xir.pc <<'EOF'
+prefix=/usr
+libdir=${prefix}/lib/aarch64-linux-gnu
+includedir=${prefix}/include
+Name: xir
+Description: Xilinx IR (Vitis AI 3.5)
+Version: 3.5.0
+Libs: -L${libdir} -lxir
+Cflags: -I${includedir}
+EOF
+
+cat > $LIBDIR/pkgconfig/vart.pc <<'EOF'
+prefix=/usr
+libdir=${prefix}/lib/aarch64-linux-gnu
+includedir=${prefix}/include
+Name: vart
+Description: Vitis AI Runtime (3.5)
+Version: 3.5.0
+Libs: -L${libdir} -lvart-runner
+Cflags: -I${includedir}
+EOF
+
+ENV PKG_CONFIG_PATH=$LIBDIR/pkgconfig:$PKG_CONFIG_PATH
+# pkg-config --modversion xir
+# pkg-config --modversion vart
+
+ENV C_INCLUDE_PATH=/usr/include/ne10:$C_INCLUDE_PATH
+ENV CPLUS_INCLUDE_PATH=/usr/include/ne10:$CPLUS_INCLUDE_PATH
+
+
 
 #cat >/usr/include/xrt/detail/version.h <<'EOF'
 RUN cat >/usr/include/version.h <<'EOF'

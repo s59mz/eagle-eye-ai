@@ -21,7 +21,7 @@
 
 
 ## Building based on kria-developer docker image
-FROM kria-developer:vvas AS build
+FROM kria-developer:opencv AS build
 
 WORKDIR /workspace
 
@@ -36,7 +36,7 @@ RUN cd eagle-eye-app ;\
 
 
 ## Building based on kria-runtime docker image
-FROM ros2-humble:vvas
+FROM ros2-humble:opencv
 
 # Copy from kria-developer builded files
 COPY --from=build /workspace/eagle-eye-app/build/install /
