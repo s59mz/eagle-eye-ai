@@ -14,18 +14,38 @@
  * limitations under the License.
  */
 
-#define VVAS_GLIB_UTILS 1
-#include <glib.h>
-
+#include <vvas/vvas_kernel.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 
-#include <vvas_core/vvas_memory.h>
-#include <vvas_core/vvas_memory_priv.h>
-#include <vvas_core/vvas_video.h>
-#include <vvas_core/vvas_log.h>
-#include <vvas/vvas_kernel.h>
+enum
+{
+  LOG_LEVEL_ERROR,
+  LOG_LEVEL_WARNING,
+  LOG_LEVEL_INFO,
+  LOG_LEVEL_DEBUG
+};
+
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define LOG_MESSAGE(level, ...) {\
+  do {\
+    char *str; \
+    if (level == LOG_LEVEL_ERROR)\
+      str = (char*)"ERROR";\
+    else if (level == LOG_LEVEL_WARNING)\
+      str = (char*)"WARNING";\
+    else if (level == LOG_LEVEL_INFO)\
+      str = (char*)"INFO";\
+    else if (level == LOG_LEVEL_DEBUG)\
+      str = (char*)"DEBUG";\
+    if (level <= kernel_priv->log_level) {\
+      printf("[%s %s:%d] %s: ",__FILENAME__, __func__, __LINE__, str);\
+      printf(__VA_ARGS__);\
+      printf("\n");\
+    }\
+  } while (0); \
+}
 
 typedef struct _kern_priv
 {
@@ -35,32 +55,26 @@ typedef struct _kern_priv
     float scale_r;
     float scale_g;
     float scale_b;
-    VvasContext *vctx;
     VVASFrame *params;
     int log_level;
 } ResizeKernelPriv;
 
-static int log_level = LOG_LEVEL_WARNING;
-
-uint32_t xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NUM_OBJECT], VVASFrame *output[MAX_NUM_OBJECT]);
-uint32_t xlnx_kernel_done(VVASKernel *handle);
-uint32_t xlnx_kernel_init(VVASKernel *handle);
+int32_t
+xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NUM_OBJECT], VVASFrame *output[MAX_NUM_OBJECT]);
+int32_t xlnx_kernel_done(VVASKernel *handle);
+int32_t xlnx_kernel_init(VVASKernel *handle);
 uint32_t xlnx_kernel_deinit(VVASKernel *handle);
 
 uint32_t xlnx_kernel_deinit(VVASKernel *handle)
 {
-    ResizeKernelPriv *kp = (ResizeKernelPriv*)handle->kernel_priv;
-    if (kp) {
-        if (kp->params) 
-	    vvas_memory_free(kp->params);
-        if (kp->vctx)   
-	    vvas_context_destroy(kp->vctx);
-        free(kp);
-    }
+    ResizeKernelPriv *kernel_priv;
+    kernel_priv = (ResizeKernelPriv *)handle->kernel_priv;
+    vvas_free_buffer (handle, kernel_priv->params);
+    free(kernel_priv);
     return 0;
 }
 
-uint32_t xlnx_kernel_init(VVASKernel *handle)
+int32_t xlnx_kernel_init(VVASKernel *handle)
 {
     json_t *jconfig = handle->kernel_config;
     json_t *val; /* kernel config from app */
@@ -126,57 +140,10 @@ uint32_t xlnx_kernel_init(VVASKernel *handle)
     else
         kernel_priv->log_level = json_integer_value (val);
 
-    VvasReturnType vret = VVAS_RET_SUCCESS;
 
-    kernel_priv->vctx = vvas_context_create(
-		    0,      /*dev_idx*/
-		    NULL,   /*xclbin_loc*/
-                    (VvasLogLevel) LOG_LEVEL_WARNING, 
-		    &vret);
 
-    if (!kernel_priv->vctx || vret != VVAS_RET_SUCCESS) {
-        printf("vvas_context_create failed rc=%d", vret);
-        free(kernel_priv);
-        return 1;
-    }
-
-    // allocate params buffer for 6 floats
-    const size_t psize = 6 * sizeof(float);
-
-    kernel_priv->params = vvas_memory_alloc(kernel_priv->vctx,
-                                 VVAS_INTERNAL_MEMORY,     // host-visible, device-accessible
-                                 VVAS_ALLOC_FLAG_NONE,     // no special flags
-                                 0,                        // default bank
-                                 psize,
-                                 &vret);
-
-    if (!kernel_priv->params || vret != VVAS_RET_SUCCESS) {
-        printf("vvas_memory_alloc failed: r=%d ptr=%p", vret, (void*)kernel_priv->params);
-        free(kernel_priv);
-        return 1;
-    }
-
-    // map & write the 6 floats
-    VvasMemoryMapInfo mi = {0};
-    vret = vvas_memory_map(kernel_priv->params, VVAS_DATA_MAP_WRITE, &mi);
-
-    if (vret != VVAS_RET_SUCCESS) {
-        printf("vvas_memory_map failed: r=%d", vret);
-        vvas_memory_free(kernel_priv->params);
-        free(kernel_priv);
-        return 1;
-    }
-
-    if (mi.size < psize) {
-        printf("params buffer too small: have %zu need %zu", mi.size, psize);
-        vvas_memory_unmap(kernel_priv->params, &mi);
-        vvas_memory_free(kernel_priv->params);
-        free(kernel_priv);
-        return 1;
-    }
-
-    pPtr = (float*)mi.data;
-
+    kernel_priv->params = vvas_alloc_buffer (handle, 6*(sizeof(float)), VVAS_INTERNAL_MEMORY, DEFAULT_MEM_BANK, NULL);
+    pPtr = kernel_priv->params->vaddr[0];
     pPtr[0] = (float)kernel_priv->mean_r;  
     pPtr[1] = (float)kernel_priv->mean_g;  
     pPtr[2] = (float)kernel_priv->mean_b;  
@@ -184,49 +151,44 @@ uint32_t xlnx_kernel_init(VVASKernel *handle)
     pPtr[4] = (float)kernel_priv->scale_g;  
     pPtr[5] = (float)kernel_priv->scale_b;  
 
-    vvas_memory_unmap(kernel_priv->params, &mi);
-
     handle->kernel_priv = (void *)kernel_priv;
 
     return 0;
 }
 
-uint32_t xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NUM_OBJECT], VVASFrame *output[MAX_NUM_OBJECT])
+int32_t xlnx_kernel_start(VVASKernel *handle, int start, VVASFrame *input[MAX_NUM_OBJECT], VVASFrame *output[MAX_NUM_OBJECT])
 {
     ResizeKernelPriv *kernel_priv;
     kernel_priv = (ResizeKernelPriv *)handle->kernel_priv;
-
-    uint64_t params_paddr = 0;
-    params_paddr = vvas_memory_get_paddr(kernel_priv->params);
 
     int ret = vvas_kernel_start (handle, "ppppuuuuuu", 
         (input[0]->paddr[0]),
         (input[0]->paddr[1]),
         (output[0]->paddr[0]),
-	params_paddr,
+        (kernel_priv->params->paddr[0]),
         (input[0]->props.width),
         (input[0]->props.height),
         (input[0]->props.stride),
         (output[0]->props.width),
         (output[0]->props.height),
-        (output[0]->props.stride)
+        (output[0]->props.width)
         );
     if (ret < 0) {
-      printf("Preprocess: failed to issue execute command");
+      LOG_MESSAGE (LOG_LEVEL_ERROR, "Preprocess: failed to issue execute command");
       return ret;
     }
 
     /* wait for kernel completion */
     ret = vvas_kernel_done (handle, 1000);
     if (ret < 0) {
-      printf("Error: Preprocess: failed to receive response from kernel");
+      LOG_MESSAGE (LOG_LEVEL_ERROR, "Preprocess: failed to receive response from kernel");
       return ret;
-    } 
+    }
 
-    return ret;
+    return 0;
 }
 
-uint32_t xlnx_kernel_done(VVASKernel *handle)
+int32_t xlnx_kernel_done(VVASKernel *handle)
 {
     return 0;
 }

@@ -9,9 +9,9 @@
       "model-class": "FACEDETECT",
       "model-path": "/opt/xilinx/kr260-eagle-eye/share/vitis_ai_library/models/",
       "model-format": "BGR",
-      "need_preprocess": false,
-      "performance_test": false,
-      "debug_level": 2
+      "vitis-ai-preprocess" : false,
+      "performance-test" : false,
+      "debug-level" : 1
     }
   }
 }
