@@ -8,10 +8,10 @@
       "model-name": "densebox_640_360",
       "model-class": "FACEDETECT",
       "model-path": "/opt/xilinx/kr260-eagle-eye/share/vitis_ai_library/models/",
-      "run_time_model": false,
+      "model-format": "BGR",
       "need_preprocess": false,
       "performance_test": false,
-      "debug_level": 0
+      "debug_level": 2
     }
   }
 }
