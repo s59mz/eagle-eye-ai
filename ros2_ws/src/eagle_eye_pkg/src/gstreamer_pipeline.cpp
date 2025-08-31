@@ -60,14 +60,23 @@ public:
 
         // Build the pipeline string
 	std::string pipeline_str = "rtspsrc location=" + camera_url_ + " ! "
-                                   "rtph265depay ! h265parse ! omxh265dec ! queue ! videoconvert ! videorate ! "
-                                   "video/x-raw, format=NV12, framerate=30/1 ! tee name=t ! queue ! "
-                                   "vvas_xmultisrc kconfig=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/preprocess.json\" ! queue ! "
-                                   "vvas_xinfer infer-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/aiinference.json\" ! "
-                                   "ima.sink_master vvas_xmetaaffixer name=ima ima.src_master ! fakesink "
-                                   "t. ! queue max-size-buffers=1 leaky=2 ! ima.sink_slave_0 ima.src_slave_0 ! queue ! "
-                                   "vvas_xfilter name=draw kernels-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/drawresult.json\" ! queue ! "
-                                   "kmssink driver-name=xlnx plane-id=39 sync=false fullscreen-overlay=true";
+            "rtph265depay ! h265parse ! omxh265dec ! "
+            "videoconvert ! video/x-raw, format=NV12 ! "
+	    "videorate ! video/x-raw, framerate=30/1 ! "
+
+	    "tee name=t ! "
+	       "queue max-size-buffers=2 leaky=0 ! "
+	       "vvas_xmultisrc kconfig=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/preprocess.json\" ! "
+	       "video/x-raw,format=BGR,width=640,height=360 ! "
+	       "queue max-size-buffers=1 leaky=2 ! "
+               "vvas_xinfer infer-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/aiinference.json\" ! "
+               "ima.sink_master vvas_xmetaaffixer name=ima ima.src_master ! fakesink "
+
+            "t. ! "
+	       "queue max-size-buffers=1 leaky=2 ! ima.sink_slave_0 ima.src_slave_0 ! "
+	       "vvas_xmetaconvert config-location=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/metaconvert.json\" ! "
+	       "vvas_xoverlay name=draw ! queue max-size-buffers=2 leaky=2 ! "
+               "kmssink driver-name=xlnx plane-id=39 sync=false fullscreen-overlay=true";
 
 	// Convert the pipeline string to const gchar*
     	const gchar *pipeline_cstr = pipeline_str.c_str();
