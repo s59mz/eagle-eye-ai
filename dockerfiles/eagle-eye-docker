@@ -1,0 +1,136 @@
+#
+# Eagle-Eye-AI
+# Smart Following Camera with Face Detection
+#   for Kria KR260 Board
+#
+# Created by: Matjaz Zibert S59MZ - August 2025
+#
+# Dockerfile for final application Docker image
+#   - Based on ROS2-Humble 
+#   - Compiled with kria-image-docker image on Kria board
+#
+# Design based on Kria KV260 Smartcam Demo App by AMD
+#
+# Original Smartcam link:
+#     https://github.com/Xilinx/smartcam/tree/xlnx_rel_v2022.1
+#     https://github.com/Xilinx/kria-docker/tree/xlnx_rel_v2022.1
+#
+# Hackster.io Project link:
+#     https://www.hackster.io/matjaz4
+#
+
+
+## Building based on kria-developer docker image
+FROM kria-image:3.5 AS build
+
+WORKDIR /workspace
+
+COPY eagle-eye-app eagle-eye-app
+
+RUN cd eagle-eye-app ;\
+    mkdir -p build/install ;\
+    cd build ;\
+    cmake ../ -DCMAKE_INSTALL_PREFIX:PATH=/ ;\
+    make ;\
+    make DESTDIR=./install install ;
+
+
+## Building based on kria-runtime docker image
+FROM kria-image:3.5
+
+LABEL Description="Docker run time image for kria boards" Vendor="AMD-Xilinx"
+ARG BUILD_DATE
+ARG BUILD_VERSION
+LABEL org.label-schema.schema-version="1.0"
+
+# BUILD_DATE should be in "2016-04-12T23:20:50.52Z" format
+LABEL org.label-schema.build-date=$BUILD_DATE
+#BUILD_VERSION should match with source code tag.
+LABEL org.label-schema.version=$BUILD_VERSION
+
+COPY scripts/bashrc /etc/bash.bashrc
+RUN chmod a+rwx /etc/bash.bashrc
+RUN echo $BUILD_DATE > /etc/BUILD_DATE.txt
+ADD scripts/welcome.sh /etc/
+
+# set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Locales
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+    locales \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LANG=en_US.UTF-8
+
+
+###
+# Install ROS2-Humble
+###
+
+# Add ROS2 apt repository
+RUN sh -c 'curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg'
+RUN sh -c 'echo "deb [arch=arm64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2-testing/ubuntu jammy main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null'
+
+# Install ROS2 packages
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+    ros-humble-ros-base \
+    ros-dev-tools ;
+
+# Source the ROS2 setup script
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+RUN echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> ~/.bashrc
+
+# Copy custom ROS2 code
+# COPY ros2_ws/src src
+
+# Build the ROS2 workspace
+# RUN /bin/bash -c "source /opt/ros/humble/setup.bash && colcon build"
+
+
+
+# Install PySerial
+RUN pip3 install pyserial==3.5
+
+# Install PyModbus
+RUN pip3 install pymodbus==3.6.9
+
+
+# Copy from kria-developer builded files
+COPY --from=build /workspace/eagle-eye-app/build/install /
+
+# Logged builded time
+ARG BUILD_DATE
+LABEL org.label-schema.build-date=$BUILD_DATE
+
+# Install welcome screen
+COPY scripts/bashrc /etc/bash.bashrc
+RUN chmod a+rwx /etc/bash.bashrc
+ADD scripts/welcome.sh /etc/
+RUN echo $BUILD_DATE > /etc/BUILD_DATE.txt
+
+# Set working directory
+WORKDIR /root/ros2_ws
+
+RUN cat >>~/.bashrc <<'EOF'
+
+if [ -f /root/ros2_ws/install/setup.bash ]; then
+    source /root/ros2_ws/install/setup.bash
+    echo ""
+    echo "*** Welcome to Eagle-Eye-AI! Type \"./run_app.sh\" to start."
+    echo "";
+else
+    echo ""
+    echo "!!! ROS2 packets haven't been built yet. Type \"colcon build\" to build them first"
+    echo "";
+fi
+EOF
+
+RUN cat >>~/.vimrc <<'EOF'
+syntax enable
+set smartindent
+set tabstop=4
+set shiftwidth=4
+set expandtab
+EOF
+
+

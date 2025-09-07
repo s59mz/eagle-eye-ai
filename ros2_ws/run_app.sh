@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 # Eagle-Eye-AI
-# Smart Following Camera with Face Recognition
+# Smart Following Camera with Face Detection
 #   for Kria KR260 Board
 #
-# Created by: Matjaz Zibert S59MZ - July 2024
+# Created by: Matjaz Zibert S59MZ - August 2025
 #
 # Application's Startup Script in a Docker container
 #   - Load the app firmware and launch docker container first

@@ -11,7 +11,7 @@
       "model-format": "BGR",
       "vitis-ai-preprocess" : false,
       "performance-test" : false,
-      "debug-level" : 1
+      "debug-level" : 0
     }
   }
 }

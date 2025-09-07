@@ -77,14 +77,6 @@ install(FILES
     RENAME      README_EAGLE_AI.md
     )
 
-install(DIRECTORY
-    config/facedetect
-    DESTINATION ${INSTALL_PATH}/share/vvas/)
-
-install(DIRECTORY
-    models/kr260/densebox_640_360
-    DESTINATION ${INSTALL_PATH}/share/vitis_ai_library/models/)
-
 set(VERSION "1.0.1")
 set(CPACK_PACKAGE_VERSION ${VERSION})
 set(CPACK_GENERATOR "RPM")

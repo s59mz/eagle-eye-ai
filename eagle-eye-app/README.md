@@ -8,21 +8,20 @@ The Eagle-Eye-AI application is designed to run within a Docker container on the
 
 The repository contains the following directory structure:
 ```
+config
+│ └── facedetect
+│       ├── aiinference.json
+│       ├── drawresult.json
+│       └── preprocess.json
+models
+│ └── densebox_640_360
+│       ├── densebox_640_360.prototxt
+│       ├── densebox_640_360.xmodel
+│       └── md5sum.txt
 eagle-eye-app/
 ├── cmake
 │   └── FindGStreamer.cmake
 ├── CMakeLists.txt
-├── config
-│   └── facedetect
-│       ├── aiinference.json
-│       ├── drawresult.json
-│       └── preprocess.json
-├── models
-│   └── kr260
-│       └── densebox_640_360
-│           ├── densebox_640_360.prototxt
-│           ├── densebox_640_360.xmodel
-│           └── md5sum.txt
 ├── README
 └── src
     ├── vvas_airender.cpp

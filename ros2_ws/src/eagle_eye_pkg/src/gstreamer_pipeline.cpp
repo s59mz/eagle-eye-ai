@@ -1,15 +1,15 @@
 /*
-# Eagle-Eye-AI
-# Smart Following Camera with Face Recognition
+# Eagle-Sight-AI
+# Smart Following Camera with Face Detection
 #   for Kria KR260 Board
 #
-# Created by: Matjaz Zibert S59MZ - July 2024
+# Created by: Matjaz Zibert S59MZ - August 2025
 #
 # GStreamer Pipeline
 #   - Creates a GStreamer pipeline based on Smartcam demo app
 #     in a ROS2 Node with RTSP video camera stream as an input.
 #   - Added a probe to GStreamer element that extract the 
-#     coordinates of the detected face and published that data
+#     coordinates of the detected object and published that data
 #     on ROS2 topic.
 #   - The probe also populates Inference Metadata with the 
 #     data read from the camera Inclinometer, so the VVAS Draw
@@ -62,8 +62,8 @@ public:
 
         // Build the pipeline string
 	std::string pipeline_str = "rtspsrc location=" + camera_url_ + " ! "
-            "rtph265depay ! h265parse ! omxh265dec ! "
-            "videoconvert ! video/x-raw, format=NV12 ! "
+        "rtph265depay ! h265parse ! omxh265dec ! "
+        "videoconvert ! video/x-raw, format=NV12 ! "
 	    "videorate ! video/x-raw, framerate=30/1 ! "
 
 	    "tee name=t ! "
@@ -71,14 +71,17 @@ public:
 	       "vvas_xmultisrc kconfig=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/preprocess.json\" ! "
 	       "video/x-raw,format=BGR,width=640,height=360 ! "
 	       "queue max-size-buffers=1 leaky=2 ! "
-               "vvas_xinfer infer-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/aiinference.json\" ! "
+               "vvas_xinfer name=infer infer-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/aiinference.json\" ! "
                "ima.sink_master vvas_xmetaaffixer name=ima ima.src_master ! fakesink "
 
             "t. ! "
 	       "queue max-size-buffers=1 leaky=2 ! ima.sink_slave_0 ima.src_slave_0 ! "
-	       "vvas_xmetaconvert config-location=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/metaconvert.json\" ! "
-	       "vvas_xoverlay ! queue max-size-buffers=2 leaky=2 ! "
-               "kmssink driver-name=xlnx plane-id=39 sync=false fullscreen-overlay=true";
+           "vvas_xfilter name=draw kernels-config=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/drawresult.json\" ! "
+           "queue max-size-buffers=2 leaky=2 ! "
+           "kmssink driver-name=xlnx plane-id=39 sync=false fullscreen-overlay=true";
+
+	       //"vvas_xmetaconvert name=metaconvert config-location=\"/opt/xilinx/kr260-eagle-eye/share/vvas/facedetect/metaconvert.json\" ! "
+	       //"vvas_xoverlay ! queue max-size-buffers=2 leaky=2 ! "
 
 	// Convert the pipeline string to const gchar*
     	const gchar *pipeline_cstr = pipeline_str.c_str();
@@ -91,32 +94,32 @@ public:
             return;
         }
 
-        // Get the gstreamer element
-        probe_element_ = gst_bin_get_by_name(GST_BIN(pipeline_), "ima");
+        // Get the  vvas_xinfer element
+        probe_element_ = gst_bin_get_by_name(GST_BIN(pipeline_), "infer");
         if (!probe_element_) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to get GStreamer element");
+            RCLCPP_ERROR(this->get_logger(), "Failed to get gst element");
             gst_object_unref(pipeline_);
             rclcpp::shutdown();
             return;
         }
 
-        // get a pad of the gstreamer element to attach a probe
-        GstPad *probe_pad = gst_element_get_static_pad(probe_element_, "sink_master");
+        // Attach a draw probe to the Source pad of the Infer element
+        GstPad *probe_pad = gst_element_get_static_pad(probe_element_, "src");
         if (!probe_pad) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to get sink pad from draw probe");
+            RCLCPP_ERROR(this->get_logger(), "Failed to get pad from gst element");
             gst_object_unref(probe_element_);
             gst_object_unref(pipeline_);
             rclcpp::shutdown();
             return;
         }
 	
-	// Attach  a probe callback
+	    // Attach  a callback to the probe
         gst_pad_add_probe(probe_pad, GST_PAD_PROBE_TYPE_BUFFER, probe_callback, this, nullptr);
         gst_object_unref(probe_pad);
 
-	// initialize camera orientation structs
-	camera_orientation_.azimuth = 0.0;
-	camera_orientation_.elevation = 0.0;
+	    // initialize camera orientation structs
+	    camera_orientation_.azimuth = 0.0;
+	    camera_orientation_.elevation = 0.0;
 
         // Start playing
         gst_element_set_state(pipeline_, GST_STATE_PLAYING);
@@ -129,7 +132,7 @@ public:
         gst_object_unref(pipeline_);
     }
 
-    void publish_max_bounding_box(const VvasBoundingBox *res_bbox, const VvasBoundingBox *face_bbox) {
+    void publish_max_bounding_box(const VvasBoundingBox *res_bbox, const VvasBoundingBox *obj_bbox) {
         static unsigned int frame_count = 0;
 
         // Handle only each N-th frame to reduce latency 
@@ -138,13 +141,13 @@ public:
 
         auto msg = eagle_eye_interfaces::msg::FaceDetect();
 
-        if (face_bbox != nullptr) {
+        if (obj_bbox != nullptr) {
             msg.frame_width = res_bbox->width;
             msg.frame_height = res_bbox->height;
-            msg.bbox_x = face_bbox->x;
-            msg.bbox_y = face_bbox->y;
-            msg.bbox_width = face_bbox->width;
-            msg.bbox_height = face_bbox->height;
+            msg.bbox_x = obj_bbox->x;
+            msg.bbox_y = obj_bbox->y;
+            msg.bbox_width = obj_bbox->width;
+            msg.bbox_height = obj_bbox->height;
             msg.face_detected = true;
         } else {
             msg.frame_width = 0;
@@ -261,23 +264,23 @@ public:
     // Inclinometer subscription callback
     void inclinometer_callback(const eagle_eye_interfaces::msg::CameraOrientation::SharedPtr msg) {
 
-        {   // received data from subscriber, save them with a lock guard
-                std::lock_guard<std::mutex> lock(this->mutex_);
+	{   // received data from subscriber, save them with a lock guard
+            std::lock_guard<std::mutex> lock(this->mutex_);
 
-                this->camera_orientation_.azimuth = msg->azimuth;
-                this->camera_orientation_.elevation = msg->elevation;
-        }
+            this->camera_orientation_.azimuth = msg->azimuth;
+            this->camera_orientation_.elevation = msg->elevation;
+	}
     }
 
 private:
     std::mutex mutex_;		// mutex for guarding between ROS2 node and VVAS library threads
 
-    GstElement *pipeline_;	// GStreamer Pipeline
-    GstElement *probe_element_;	// GStreamer Probe on the Draw VVAS Filter element
+    GstElement *pipeline_;	        // GStreamer Pipeline
+    GstElement *probe_element_;	    // GStreamer element to be probed
 
     CameraOrientation camera_orientation_;	// Stores cam orientation received by ROS2 subscriber
 
-    // publisher for detected face coordinates
+    // publisher for detected object coordinates
     rclcpp::Publisher<eagle_eye_interfaces::msg::FaceDetect>::SharedPtr face_detect_publisher_;
 
     // subscriber for receiving Camera's Inclinometer data

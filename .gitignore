@@ -149,3 +149,6 @@ ros2_ws/Makefile
 # Ignore the overlay file (created when using colcon to overlay workspaces)
 *.overlay
 
+# Ignore very large model file
+#*.xmodel
+

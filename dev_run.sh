@@ -1,9 +1,9 @@
 #
-# Eagle-Eye-AI
-# Smart Following Camera with Face Recognition
+# Wild-Sight-AI
+# Smart Following Camera with Animal Detection
 #   for Kria KR260 Board
 #
-# Created by: Matjaz Zibert S59MZ - July 2024
+# Created by: Matjaz Zibert S59MZ - August 2025
 #
 # Startup script for Xilinx kria-developer image 
 #   - Intended for manually compiling Kria's applications and 
@@ -30,5 +30,5 @@ docker run \
 -v /etc/vart.conf:/etc/vart.conf \
 -v /lib/firmware/xilinx:/lib/firmware/xilinx \
 -v /run:/run \
--v ./eagle-eye-app:/eagle-eye-app \
--it kria-developer:opencv bash
+-v ./wild-sight-app:/wild-sight-app \
+-it kria-image:3.5 bash
