@@ -57,10 +57,10 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
 
 1. **Update the RTSP IP Camera URL**:
 
-    Edit the `run_eagle_eye_ai.sh` script file in the `scripts` directory and update the `default_camera_url` parameter:
+    Edit the `run_app.sh` script file in the `scripts` directory and update the `default_camera_url` parameter:
 
     ```bash
-    vi scripts/run_eagle_eye_ai.sh
+    vi ros2_ws/run_app.sh
 
     # Update line #18 with your IP camera URL:
     default_camera_url="rtsp://192.168.1.11:554/stream1"
@@ -92,20 +92,20 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     root@xlnx-docker/#
     ```
 
-2. **Optional: Run an Empty ROS2 Docker Image**:
+2. **Optional: Run an Empty Kria Runtime Image**:
 
-    To test your own ROS2/GStreamer applications:
+    To test your own GStreamer applications based on Vitis-AI 3.5 and VVAS 3.0:
 
     ```bash
-    ./ros2_humble_run.sh
+    ./dev_run.sh
     ```
 
-3. **Manage Docker Storage**:
+3. **Optional: Monitor Test**:
 
-    To remove the existing container if storage is limited:
+    To send a Test Pattern Image to monitor (no DPU or accelerators, just video test):
 
     ```bash
-    docker rmi --force eagle-eye-ai
+    ./test.sh
     ```
 
 ## Running the Application
@@ -115,7 +115,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     * Launch the application:
 
       ```bash
-      ./run_eagle_eye_ai.sh
+      ./run_app.sh
       ```
 
       You should see the camera’s captured images on the monitor connected to the board. When a face is detected, a blue box will appear around it, tracking the face as it moves. The camera rotator will also adjust to keep the detected face centered on the screen.
@@ -125,7 +125,7 @@ Eagle-Eye-AI is a project designed for the Kria KR260 board that enables AI-driv
     * To change the RTSP IP camera URL, run the startup script with the new URL:
 
       ```bash
-      ./run_eagle_eye_ai.sh rtsp://192.168.1.20:554/stream2
+      ./run_app.sh rtsp://192.168.1.20:554/stream2
       ```
 
     For a visual guide on starting the Eagle-Eye-AI application, watch this [YouTube video](https://www.youtube.com/watch?v=IakoRX5yPNo).
