@@ -63,8 +63,8 @@ else
   echo "$APP_IMAGE already exists."
 fi
 
-if  [ docker image inspect $APP_IMAGE > /dev/null 2>&1 ] &&  [ docker image inspect $ROS_IMAGE > /dev/null 2>&1 ] ; then
-  echo "The $APP_IMAGE is now on Kria board and ready for use. Type ./run.sh to run it."
+if  docker image inspect $APP_IMAGE > /dev/null 2>&1 ; then
+  echo "The $APP_IMAGE is on Kria board and ready for use. Type ./run.sh to run it."
 else
   echo "ERROR: Can't build the $APP_IMAGE image"
 fi

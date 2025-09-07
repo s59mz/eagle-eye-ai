@@ -36,7 +36,10 @@ add_executable(gstreamer_pipeline src/gstreamer_pipeline.cpp)
 ament_target_dependencies(gstreamer_pipeline eagle_eye_interfaces rclcpp)
 
 # Link GStreamer libraries
-target_link_libraries(gstreamer_pipeline ${GST_LIBRARIES})
+target_link_libraries(gstreamer_pipeline
+    ${GST_LIBRARIES}
+    libgstvvasinfermeta-3.0.so
+)
 
 install(TARGETS
         gstreamer_pipeline
